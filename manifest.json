@@ -1,0 +1,15 @@
+{
+  "name": "Utilidades Agrivalle",
+  "short_name": "Utilidades",
+  "description": "Monitoramento de Utilidades Agrivalle - Água, Energia, Gás, Análises (Portaria 19A e 888)",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f7f7e9",
+  "theme_color": "#fd592d",
+  "icons": [
+    { "src": "https://agrivalle.com.br/wp-content/uploads/2022/08/favicon-300x300.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "https://agrivalle.com.br/wp-content/uploads/2022/08/favicon-300x300.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}
