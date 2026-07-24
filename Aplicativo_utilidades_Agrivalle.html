@@ -1,0 +1,1292 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#fd592d">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+<title>Alimentador · Dashboard Utilidades</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<style>
+:root{--primary:#fd592d;--primary-dark:#c73d00;--success:#16a34a;--danger:#dc2626;--warning:#d97706;--bg:#f7f7e9;--card:#fff;--text:#000000;--muted:#5d7261;--border:#d6d1c4;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Poppins',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);padding-bottom:78px;}
+h1,h2,h3,.btn,.nav-item,.hc-name,.export-title,.splash-title{font-family:'Poppins',sans-serif;font-weight:700;}
+.header{background:var(--primary);color:#fff;padding:16px 24px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 8px rgba(0,0,0,.2);flex-wrap:wrap;gap:8px;}
+.header h1{font-size:19px;font-weight:700;}
+.header .subtitle{font-size:16px;font-weight:600;opacity:.95;margin-top:3px;}
+.actionbar{background:#fff;border-bottom:1px solid var(--border);padding:12px 24px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
+.btn{border:none;border-radius:8px;padding:10px 16px;font-size:13px;font-weight:700;cursor:pointer;color:#fff;white-space:nowrap;}
+.btn.green{background:#16a34a;}.btn.blue{background:#5d7261;}.btn.amber{background:#d97706;}.btn.purple{background:#5d7261;}.btn.red{background:#dc2626;}.btn.gray{background:#5d7261;}
+.btn:disabled{opacity:.45;cursor:not-allowed;}
+.btn:hover:not(:disabled){opacity:.9;}
+.status{padding:8px 24px;font-size:12px;color:var(--muted);}
+.tabs{display:flex;gap:6px;background:#fff;border-bottom:1px solid var(--border);padding:10px 24px 0;flex-wrap:wrap;}
+.tab-btn{border:none;background:#eef2f7;color:#374151;border-radius:10px 10px 0 0;padding:9px 15px;font-size:13px;font-weight:700;cursor:pointer;}
+.tab-btn.ativo{background:var(--primary);color:#fff;}
+.tab-content{display:none;}
+.tab-content.ativo{display:block;}
+.content{padding:20px 24px;max-width:1100px;margin:0 auto;}
+.card{background:var(--card);border-radius:12px;padding:20px;box-shadow:0 1px 4px rgba(0,0,0,.07);margin-bottom:20px;}
+.card h3{font-size:15px;font-weight:700;margin-bottom:14px;}
+.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:14px;}
+.fld{display:flex;flex-direction:column;gap:4px;justify-content:flex-end;}
+.fld input,.fld select{margin-top:auto;}
+.fld label{font-size:12px;font-weight:600;color:var(--muted);}
+.fld input,.fld select{border:1px solid var(--border);border-radius:8px;padding:9px 10px;font-size:14px;background:#fff;}
+.fld input:focus,.fld select:focus{outline:2px solid #bfdbfe;border-color:#93c5fd;}
+.calc{font-size:12px;color:var(--muted);margin:-6px 0 12px;}
+.calc b{color:var(--text);}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+th{text-align:left;padding:8px 10px;background:var(--bg);color:var(--muted);font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.4px;white-space:nowrap;}
+td{padding:8px 10px;border-bottom:1px solid var(--border);white-space:nowrap;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:#f9fafb;}
+.del{background:#fee2e2;color:#b91c1c;border:none;border-radius:6px;padding:4px 9px;font-size:12px;font-weight:700;cursor:pointer;}
+.edit{background:#e0edff;color:#1e40af;border:none;border-radius:6px;padding:4px 9px;font-size:12px;font-weight:700;cursor:pointer;margin-right:4px;}
+.empty{color:var(--muted);font-size:13px;padding:14px 0;}
+.badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;}
+.badge.ok{background:#dcfce7;color:var(--success);}
+.badge.nok{background:#fee2e2;color:var(--danger);}
+.tbl-wrap{overflow-x:auto;}
+.count{font-size:12px;color:var(--muted);font-weight:600;margin-left:6px;}
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:999;align-items:center;justify-content:center;padding:18px;}
+.modal .box{background:#fff;border-radius:14px;padding:22px;width:100%;max-width:520px;display:flex;flex-direction:column;gap:12px;}
+.hint{font-size:12px;color:var(--muted);line-height:1.5;}
+/* ===== SPLASH SCREEN ===== */
+#splash-screen{position:fixed;inset:0;z-index:99999;background:linear-gradient(160deg,#fd592d 0%,#c73d00 60%,#a32e00 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;transition:opacity .6s ease;}
+#splash-screen.hide{opacity:0;pointer-events:none;}
+.splash-logo{background:transparent;padding:0;box-shadow:none;animation:splashPulse 1.2s ease-in-out infinite alternate;}
+.splash-logo img{height:76px;object-fit:contain;display:block;filter:drop-shadow(0 4px 10px rgba(0,0,0,.25));}
+@keyframes splashPulse{from{transform:scale(1);}to{transform:scale(1.12);}}
+.splash-title{font-family:'Poppins',-apple-system,sans-serif;font-size:34px;font-weight:800;color:#fff;letter-spacing:4px;text-align:center;line-height:1.25;text-shadow:0 2px 8px rgba(0,0,0,.25);opacity:0;animation:fadeInTitle .8s ease .4s forwards;}
+.splash-sub{font-family:'Poppins',-apple-system,sans-serif;font-size:15px;color:rgba(255,255,255,.9);letter-spacing:3px;text-transform:uppercase;opacity:0;animation:fadeInSub .6s ease 1.2s forwards;}
+.splash-tagline{font-family:'Poppins',-apple-system,sans-serif;font-size:14px;font-style:italic;color:rgba(255,255,255,.75);text-align:center;line-height:1.6;letter-spacing:.5px;margin-top:2px;opacity:0;animation:fadeInSub .6s ease 1.6s forwards;}
+@keyframes fadeInTitle{from{opacity:0;transform:translateY(-10px);}to{opacity:1;transform:translateY(0);}}
+@keyframes fadeInSub{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+.export-card{display:flex;align-items:center;gap:16px;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;box-shadow:0 1px 4px rgba(0,0,0,.07);cursor:pointer;transition:.15s;margin-bottom:14px;}
+.export-card:hover{border-color:var(--primary);box-shadow:0 3px 10px rgba(30,58,95,.15);transform:translateY(-1px);}
+.export-icon{font-size:38px;line-height:1;}
+.export-title{font-size:16px;font-weight:700;color:var(--text);}
+.export-sub{font-size:12.5px;color:var(--muted);margin-top:2px;}
+.fld textarea{border:1px solid var(--border);border-radius:8px;padding:9px 10px;font-size:14px;font-family:inherit;resize:vertical;}
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:16px;}
+.kpi{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 16px;box-shadow:0 1px 4px rgba(0,0,0,.06);}
+.kpi .num{font-size:22px;font-weight:800;color:var(--primary);line-height:1.1;}
+.kpi .lbl{font-size:11px;color:var(--muted);margin-top:4px;}
+.dash-wrap{position:relative;height:260px;}
+.dash-sec{font-family:'Poppins',sans-serif;font-size:18px;font-weight:800;color:var(--primary);margin:0 0 12px;padding-bottom:8px;border-bottom:2px solid var(--primary);}
+.eta-form th{white-space:nowrap;}
+.eta-form input{width:100%;min-width:80px;border:1px solid var(--border);border-radius:6px;padding:6px 8px;font-size:14px;}
+@media print{ .bottom-nav,.no-print{display:none !important;} body{padding-bottom:0 !important;background:#fff !important;} .header{box-shadow:none !important;} .card{box-shadow:none !important;border:1px solid #e5e7eb;break-inside:avoid;} }
+.acoes-btn{background:rgba(255,255,255,.16);border:none;color:#fff;padding:9px 14px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:700;white-space:nowrap;}
+.acoes-btn:hover{background:rgba(255,255,255,.28);}
+.actionbar.collapsed{display:none;}
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--border);display:flex;justify-content:space-around;overflow-x:auto;z-index:100;padding-bottom:env(safe-area-inset-bottom);-webkit-overflow-scrolling:touch;box-shadow:0 -2px 10px rgba(0,0,0,.08);}
+.bottom-nav::-webkit-scrollbar{height:0;}
+.nav-item{flex:1 1 0;max-width:120px;min-width:62px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:8px 10px 6px;cursor:pointer;border:none;background:none;color:var(--muted);font-size:10px;font-weight:600;transition:.15s;border-top:3px solid transparent;white-space:nowrap;}
+.nav-item.active{color:var(--primary);border-top-color:var(--primary);background:#fff0ea;}
+.nav-item .nav-icon{font-size:21px;line-height:1;}
+@media(max-width:600px){.content{padding:16px 12px;}.header h1{font-size:16px;}.card{padding:16px;}}
+.home-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:4px;max-width:760px;margin-left:auto;margin-right:auto;}
+.home-card{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:var(--card);border:1px solid var(--border);border-radius:16px;padding:24px 14px;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.07);transition:.15s;}
+.home-card:hover{border-color:var(--primary);transform:translateY(-2px);box-shadow:0 6px 16px rgba(253,89,45,.20);}
+.home-card .hc-name{font-size:15px;font-weight:700;color:var(--text);text-align:center;line-height:1.2;}
+.home-card .hc-icon{font-size:48px;line-height:1;}
+@media(max-width:600px){.home-grid{grid-template-columns:repeat(3,1fr);gap:8px;}.home-card{padding:14px 6px;gap:6px;}.home-card .hc-name{font-size:12px;}.home-card .hc-icon{font-size:34px;}}
+#tbl-agua-dia{font-size:12px;width:100%;}
+#tbl-agua-dia th,#tbl-agua-dia td{padding:5px 7px;white-space:nowrap;}
+</style>
+</head>
+<body>
+
+<!-- SPLASH SCREEN -->
+<div id="splash-screen">
+  <div class="splash-logo"><img src="https://agrivalle.com.br/wp-content/uploads/2024/06/agm-569-logo-offwhite.png" alt="Agrivalle" onerror="this.style.display='none'"></div>
+  <div class="splash-title">UTILIDADES</div>
+  <div class="splash-sub">Agrivalle Brasil</div>
+  <div class="splash-tagline">Monitoramento · Portaria 888 e 19A</div>
+</div>
+<script>
+(function(){ function hide(){ var s=document.getElementById('splash-screen'); if(!s)return; s.classList.add('hide'); setTimeout(function(){ s.style.display='none'; },650); } if(document.readyState==='loading'){ window.addEventListener('DOMContentLoaded', function(){ setTimeout(hide,3000); }); } else { setTimeout(hide,3000); } })();
+</script>
+
+<div class="header" style="justify-content:center;text-align:center;flex-direction:column;gap:6px;">
+  <img src="https://agrivalle.com.br/wp-content/uploads/2024/06/agm-569-logo-offwhite.png" alt="Agrivalle" style="height:32px;object-fit:contain;" onerror="this.style.display='none';var t=document.getElementById('hdr-fallback');if(t)t.style.display='block';">
+  <h1 id="hdr-fallback" style="display:none;">Agrivalle</h1>
+  <div class="subtitle">Utilidades · Monitoramento · Portaria 888 e 19A</div>
+</div>
+
+
+<div class="actionbar" id="resp-bar" style="padding:10px 24px;">
+  <label style="font-size:13px;font-weight:700;color:var(--text);">👷 Responsável:</label>
+  <input type="text" id="resp-atual" list="lst-resp" placeholder="Selecione ou digite o nome" style="border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:14px;min-width:240px;">
+  <datalist id="lst-resp"></datalist>
+  <span class="hint" style="margin:0;">Obrigatório para salvar. Gerencie os nomes na aba Cadastro.</span>
+</div>
+
+<div class="content">
+
+  <div id="voltar-bar" style="display:none;margin-bottom:12px;"><button class="btn gray" onclick="abrirTab('home')">← Início</button></div>
+
+  <!-- INÍCIO -->
+  <div id="tab-home" class="tab-content ativo">
+    <div class="home-grid">
+      <div class="home-card" onclick="abrirTab('agua')"><div class="hc-name">Água</div><div class="hc-icon">💧</div></div>
+      <div class="home-card" onclick="abrirTab('energia')"><div class="hc-name">Energia</div><div class="hc-icon">⚡</div></div>
+      <div class="home-card" onclick="abrirTab('gas')"><div class="hc-name">Gás</div><div class="hc-icon">🔥</div></div>
+      <div class="home-card" onclick="abrirTab('anaint')"><div class="hc-name">Análises ETE</div><div class="hc-icon">🧪</div></div>
+      <div class="home-card" onclick="abrirTab('eta')"><div class="hc-name">Análises ETA</div><div class="hc-icon">🚰</div></div>
+      <div class="home-card" onclick="abrirTab('anaext')"><div class="hc-name">Análises Externas</div><div class="hc-icon">📄</div></div>
+    </div>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div id="tab-dash" class="tab-content">
+    <div style="display:flex;justify-content:flex-end;margin-bottom:12px;">
+      <button class="btn red no-print" onclick="imprimirDash()">🖨️ Exportar PDF</button>
+    </div>
+    <div class="card">
+      <div class="dash-sec">💧 Consumo de Água</div>
+      <div class="kpi-grid"><div class="kpi"><div class="num" id="dk-agua">—</div><div class="lbl">Água volume (ano)</div></div><div class="kpi"><div class="num" id="dk-aguac">—</div><div class="lbl">Água custo (ano)</div></div></div>
+      <h3>💧 Água — consumo mensal (m³) e custo (R$) · ano vigente</h3><div class="dash-wrap"><canvas id="dch-agua"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="dash-sec">⚡ Consumo de Energia</div>
+      <div class="kpi-grid"><div class="kpi"><div class="num" id="dk-en">—</div><div class="lbl">Energia (kWh, ano)</div></div><div class="kpi"><div class="num" id="dk-encusto">—</div><div class="lbl">Custo energia (ano)</div></div></div>
+      <h3>⚡ Energia — consumo (kWh) · ano vigente</h3><div class="dash-wrap"><canvas id="dch-en"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="dash-sec">🔥 Consumo de Gás</div>
+      <div class="kpi-grid"><div class="kpi"><div class="num" id="dk-gas">—</div><div class="lbl">Gás volume (ano)</div></div><div class="kpi"><div class="num" id="dk-gasc">—</div><div class="lbl">Gás custo (ano)</div></div></div>
+      <h3>🔥 Gás — volume mensal (m³) · ano vigente</h3><div class="dash-wrap"><canvas id="dch-gas"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="dash-sec">🧪 Análises ETE — Portaria 19A (interna)</div>
+      <div class="kpi-grid"><div class="kpi"><div class="num" id="dk-eten">—</div><div class="lbl">Análises ETE (total)</div></div><div class="kpi"><div class="num" id="dk-eteoc">—</div><div class="lbl">Ocorrências ETE</div></div></div>
+      <h3>🧪 ETE (PORT 19A) — pH e metais</h3><div class="dash-wrap"><canvas id="dch-ete"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="dash-sec">🚰 Análises ETA</div>
+      <div class="kpi-grid"><div class="kpi"><div class="num" id="dk-etan">—</div><div class="lbl">Medições ETA (total)</div></div><div class="kpi"><div class="num" id="dk-etaoc">—</div><div class="lbl">Ocorrências ETA</div></div></div>
+      <h3>🚰 ETA — pH por ponto</h3><div class="dash-wrap"><canvas id="dch-eta"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="dash-sec">📄 Análises Externas — Portaria 19A</div>
+      <div class="kpi-grid"><div class="kpi"><div class="num" id="dk-extn">—</div><div class="lbl">Análises externas (total)</div></div><div class="kpi"><div class="num" id="dk-extconf">—</div><div class="lbl">% Conforme</div></div></div>
+      <h3>📄 Análises Externas — Conformidade</h3><div class="dash-wrap"><canvas id="dch-conf"></canvas></div>
+    </div>
+    <div class="card"><h3>📈 Análises Externas — Tendência (Zinco/Níquel/Cobre mg/L · pH)</h3><div class="dash-wrap"><canvas id="dch-exttrend"></canvas></div></div>
+    <div class="card">
+      <div class="dash-sec">🚰 Análises — Portaria 888</div>
+      <div class="kpi-grid"><div class="kpi"><div class="num" id="dk-888n">—</div><div class="lbl">Análises 888 (total)</div></div><div class="kpi"><div class="num" id="dk-888conf">—</div><div class="lbl">% Conforme 888</div></div></div>
+      <h3>🚰 Portaria 888 — Cloro Residual Livre por ponto (mg/L)</h3><div class="dash-wrap"><canvas id="dch-888"></canvas></div>
+    </div>
+    <div class="card"><h3>🚰 Portaria 888 — Turbidez por ponto (NTU · máx 5)</h3><div class="dash-wrap"><canvas id="dch-888turb"></canvas></div></div>
+    <div class="card"><h3>🚰 Portaria 888 — Cor Aparente por ponto (mg Pt-Co/L · máx 15)</h3><div class="dash-wrap"><canvas id="dch-888cor"></canvas></div></div>
+    <div class="card"><h3>⚠️ Ocorrências (Fato / Causa / Ação)</h3><div class="tbl-wrap"><table id="dtb-occ"></table></div></div>
+  </div>
+
+  <!-- AJUDA -->
+  <div id="tab-help" class="tab-content">
+    <div class="card"><div class="dash-sec">❓ Ajuda — Utilidades Agrivalle</div>
+      <p style="line-height:1.7">Este app registra e acompanha as <b>utilidades da Agrivalle</b> (Água, Energia, Gás e Análises de água), calcula rateios por centro de custo, lê PDFs de análises e gera gráficos e planilha para alimentar o dashboard. Os dados ficam salvos <b>no próprio aparelho</b> (não vão para a nuvem automaticamente).</p>
+    </div>
+
+    <div class="card"><h3>🏠 Início e Responsável</h3>
+      <p style="line-height:1.7">Na tela Início ficam os ícones das categorias. <b>Selecione o Responsável</b> no campo do topo — ele é <b>obrigatório</b>: sem ele, as categorias de lançamento não abrem. Os nomes disponíveis são cadastrados na aba <b>Cadastro</b>. Toque em uma categoria para abrir o formulário; use o botão <b>← Início</b> para voltar.</p>
+    </div>
+
+    <div class="card"><h3>💧 Água</h3>
+      <p style="line-height:1.7"><b>Leituras diárias de hidrômetro</b> (leitura acumulada): Poço artesiano, Caixa 170 m³, Água de Reuso e Volume tratado ETE — o app calcula o <b>consumo do dia</b> pela diferença entre leituras.</p>
+      <p style="line-height:1.7"><b>Mensal:</b> SAAE Volume/Valor Total e Point One Volume/Valor Total, com a coluna Valor Total (soma). Mostra só o ano vigente.</p>
+      <p style="line-height:1.7"><b>Comparativo:</b> consumo diário da Caixa 170 m³ × total do mês (SAAE + Point One).</p>
+      <p style="line-height:1.7"><b>Rateio por Centro de Custo:</b> distribui o custo da água pelos centros de custo (percentuais editáveis por CC). Escolha o mês, ajuste os % se preciso e clique em Salvar.</p>
+    </div>
+
+    <div class="card"><h3>⚡ Energia e 🔥 Gás</h3>
+      <p style="line-height:1.7"><b>Energia (mensal):</b> Consumo (kWh), Custo Livre e Custo Cativo — a Economia é calculada automaticamente. <b>Gás (mensal):</b> Volume e Valor, com Consumo/dia (volume ÷ 30). Ambos têm <b>Rateio por Centro de Custo</b> próprio (Energia rateia o custo livre; Gás rateia o valor).</p>
+    </div>
+
+    <div class="card"><h3>🧪 Análises ETE (Portaria 19A — interna)</h3>
+      <p style="line-height:1.7">Parâmetros e limites: <b>pH 6,0–10,0 · Temperatura ≤40°C · Zinco ≤5,0 · Níquel ≤2,0 · Cobre ≤1,5 · Sulfato ≤1000 ppm</b>. Valores fora da faixa ficam em vermelho e abrem a janela <b>Fato / Causa / Ação</b> para descrever a ocorrência. Clique no valor em vermelho (ou no ⚠) para ver/editar a ocorrência.</p>
+    </div>
+
+    <div class="card"><h3>🚰 Análises ETA (por ponto)</h3>
+      <p style="line-height:1.7">Uma linha por ponto: <b>Poço Profundo</b> e <b>Caixa 170 m³</b> (Cloro 0,2–5 ppm · pH 6,5–8,5 · Temp ≤40°C); <b>Água Abrandada</b> e <b>Abrandada BIO</b> (pH 6,2–8,0); <b>Abrandada Caldeira</b> (pH 10,5–11,5). Preencha os pontos e clique em Salvar medições; fora da faixa abre Fato/Causa/Ação.</p>
+    </div>
+
+    <div class="card"><h3>📄 Análises Externas — Portaria 19A e 888</h3>
+      <p style="line-height:1.7">Dois botões separam <b>Portaria 19A</b> (Aqualab) e <b>Portaria 888</b> (água potável). Em cada uma, clique em <b>📎 Ler PDF e adicionar</b>: o app abre o PDF, extrai a <b>data</b>, o <b>nº do relatório</b> e os valores, e preenche a linha com o <b>Status (Conforme/Não conforme)</b>. Na 888 o status vem da declaração "ATENDE" do laudo; na 19A é comparado com os limites do Art. 19A. Há filtro por ano, botão Limpar ano e checagem de duplicados (não repete o mesmo nº).</p>
+    </div>
+
+    <div class="card"><h3>📊 Dashboard</h3>
+      <p style="line-height:1.7">Monta os gráficos <b>ao vivo</b> com o que você lançou: consumo/custo de Água, Energia e Gás (ano vigente), tendências de análises (ETE, ETA, Externas 19A e 888), conformidade e a tabela de ocorrências. Botão <b>🖨️ Exportar PDF</b> gera o PDF do dashboard.</p>
+    </div>
+
+    <div class="card"><h3>📤 Envio, Exportar e Backup</h3>
+      <p style="line-height:1.7"><b>Enviar por e-mail</b> gera a planilha, salva no aparelho e abre o e-mail com o anexo (no PC baixa a planilha e abre um e-mail para anexar). <b>Exportar planilha (.xlsx)</b> gera a Base_Utilidades_Agrivalle.xlsx (formato do dashboard). <b>Backup (.json)</b> salva uma cópia de tudo; <b>Restaurar</b> recarrega de um backup. As abas Água, Energia e Gás também têm <b>🖨️ Exportar/Enviar PDF</b> só daquela categoria.</p>
+    </div>
+
+    <div class="card"><h3>🗂️ Cadastro (com senha)</h3>
+      <p style="line-height:1.7">Gerencia <b>Responsáveis</b>, <b>Produtos ETE</b> e <b>E-mails</b> destinatários, e mostra a lista de <b>parâmetros coletados</b> por categoria. Protegido por senha (padrão configurável no código).</p>
+    </div>
+
+    <div class="card"><h3>ℹ️ Observações</h3>
+      <p style="line-height:1.7">Os dados são salvos localmente no navegador/aparelho (não se misturam com outros apps). Fonte, gráficos, leitura de PDF e o logo carregam da <b>internet</b> na primeira vez; depois o app abre offline (a leitura de PDF e os gráficos precisam de rede). Para alimentar o dashboard: exporte/gere a planilha e use "🔄 Atualizar dados" no dashboard.</p>
+    </div>
+  </div>
+
+  <!-- ÁGUA -->
+  <div id="tab-agua" class="tab-content">
+    <div class="no-print" style="text-align:right;margin-bottom:10px;"><button class="btn red" onclick="window.print()">🖨️ Exportar / Enviar PDF</button></div>
+    <div class="card">
+      <h3>💧 Leituras diárias de hidrômetro</h3>
+      <div class="form-grid">
+        <div class="fld"><label>Data</label><input type="date" id="ad-d"></div>
+        <div class="fld"><label>Leitura Poço artesiano (m³)</label><input type="text" inputmode="decimal" id="ad-poco"></div>
+        <div class="fld"><label>Leitura Caixa 170 m³ (m³)</label><input type="text" inputmode="decimal" id="ad-cx170"></div>
+        <div class="fld"><label>Leitura Água de Reuso (m³)</label><input type="text" inputmode="decimal" id="ad-reuso"></div>
+        <div class="fld"><label>Leitura Volume ETE (m³)</label><input type="text" inputmode="decimal" id="ad-ete"></div>
+      </div>
+      <div class="calc" id="ad-calc" style="margin-top:0;">Digite a leitura que aparece no hidrômetro. O consumo do dia é calculado pela diferença.</div>
+      <button class="btn green" onclick="addAguaDia()">➕ Salvar leitura</button>
+    </div>
+    <div class="card"><h3>Leituras diárias <span class="count" id="cnt-agua-dia"></span></h3><div class="tbl-wrap"><table id="tbl-agua-dia"></table></div></div>
+    <div class="card">
+      <h3>Adicionar / atualizar mês — Água</h3>
+      <div class="form-grid">
+        <div class="fld"><label>Ano</label><input type="number" id="ag-ano" placeholder="2026"></div>
+        <div class="fld"><label>Mês</label><select id="ag-mes"></select></div>
+        <div class="fld"><label>SAAE Volume (m³)</label><input type="text" inputmode="decimal" id="ag-saae_m3"></div>
+        <div class="fld"><label>SAAE Valor Total (R$)</label><input type="text" inputmode="decimal" id="ag-saae_poco"></div>
+        <div class="fld"><label>Point One Volume (m³)</label><input type="text" inputmode="decimal" id="ag-po_m3"></div>
+        <div class="fld"><label>Point One Valor Total (R$)</label><input type="text" inputmode="decimal" id="ag-po_val"></div>
+      </div>
+      <button class="btn green" onclick="addAgua()">➕ Salvar mês</button>
+    </div>
+    <div class="card"><h3>Registros de Água <span class="count" id="cnt-agua"></span></h3><div class="tbl-wrap"><table id="tbl-agua"></table></div></div>
+    <div class="card"><h3>📊 Comparativo: consumo diário CX170 × total do mês (SAAE + Point One)</h3><div class="tbl-wrap"><table id="tbl-agua-comp"></table></div></div>
+    <div class="card">
+      <h3>🏷️ Rateio por Centro de Custo — Água</h3>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px;">
+        <label style="font-size:12px;color:var(--muted);font-weight:700;">Mês:</label>
+        <select id="rt-agua-mes" onchange="renderRateio('agua')" style="border:1px solid var(--border);border-radius:8px;padding:6px 10px;font-size:14px;"></select>
+        <span id="rt-agua-total" class="hint" style="margin:0;"></span>
+      </div>
+      <div class="tbl-wrap"><table id="tbl-rateio-agua"></table></div>
+      <div style="margin-top:10px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+        <button class="btn green" onclick="salvarRateio('agua')" style="padding:8px 14px;">💾 Salvar percentuais</button>
+        <span id="rt-agua-soma" class="hint" style="margin:0;"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ENERGIA -->
+  <div id="tab-energia" class="tab-content">
+    <div class="no-print" style="text-align:right;margin-bottom:10px;"><button class="btn red" onclick="window.print()">🖨️ Exportar / Enviar PDF</button></div>
+    <div class="card">
+      <h3>Adicionar / atualizar mês — Energia</h3>
+      <div class="form-grid">
+        <div class="fld"><label>Ano</label><input type="number" id="en-ano" placeholder="2026"></div>
+        <div class="fld"><label>Mês</label><select id="en-mes"></select></div>
+        <div class="fld"><label>Consumo (kWh)</label><input type="text" inputmode="decimal" id="en-kwh"></div>
+        <div class="fld"><label>Custo Livre (R$)</label><input type="text" inputmode="decimal" id="en-livre" oninput="calcEnergia()"></div>
+        <div class="fld"><label>Custo Cativo (R$)</label><input type="text" inputmode="decimal" id="en-cativo" oninput="calcEnergia()"></div>
+      </div>
+      <div class="calc" id="en-calc">Economia calculada automaticamente a partir de Livre e Cativo.</div>
+      <button class="btn green" onclick="addEnergia()">➕ Salvar mês</button>
+    </div>
+    <div class="card"><h3>Registros de Energia <span class="count" id="cnt-energia"></span></h3><div class="tbl-wrap"><table id="tbl-energia"></table></div></div>
+    <div class="card">
+      <h3>🏷️ Rateio por Centro de Custo — Energia (custo mercado livre)</h3>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px;">
+        <label style="font-size:12px;color:var(--muted);font-weight:700;">Mês:</label>
+        <select id="rt-energia-mes" onchange="renderRateio('energia')" style="border:1px solid var(--border);border-radius:8px;padding:6px 10px;font-size:14px;"></select>
+        <span id="rt-energia-total" class="hint" style="margin:0;"></span>
+      </div>
+      <div class="tbl-wrap"><table id="tbl-rateio-energia"></table></div>
+      <div style="margin-top:10px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+        <button class="btn green" onclick="salvarRateio('energia')" style="padding:8px 14px;">💾 Salvar percentuais</button>
+        <span id="rt-energia-soma" class="hint" style="margin:0;"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- GÁS -->
+  <div id="tab-gas" class="tab-content">
+    <div class="no-print" style="text-align:right;margin-bottom:10px;"><button class="btn red" onclick="window.print()">🖨️ Exportar / Enviar PDF</button></div>
+    <div class="card">
+      <h3>Adicionar / atualizar mês — Gás Natural</h3>
+      <div class="form-grid">
+        <div class="fld"><label>Ano</label><input type="number" id="gs-ano" placeholder="2026"></div>
+        <div class="fld"><label>Mês</label><select id="gs-mes"></select></div>
+        <div class="fld"><label>Volume (m³)</label><input type="text" inputmode="decimal" id="gs-m3"></div>
+        <div class="fld"><label>Valor (R$)</label><input type="text" inputmode="decimal" id="gs-valor"></div>
+      </div>
+      <button class="btn green" onclick="addGas()">➕ Salvar mês</button>
+    </div>
+    <div class="card"><h3>Registros de Gás <span class="count" id="cnt-gas"></span></h3><div class="tbl-wrap"><table id="tbl-gas"></table></div></div>
+    <div class="card">
+      <h3>🏷️ Rateio por Centro de Custo — Gás Natural</h3>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px;">
+        <label style="font-size:12px;color:var(--muted);font-weight:700;">Mês:</label>
+        <select id="rt-gas-mes" onchange="renderRateio('gas')" style="border:1px solid var(--border);border-radius:8px;padding:6px 10px;font-size:14px;"></select>
+        <span id="rt-gas-total" class="hint" style="margin:0;"></span>
+      </div>
+      <div class="tbl-wrap"><table id="tbl-rateio-gas"></table></div>
+      <div style="margin-top:10px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+        <button class="btn green" onclick="salvarRateio('gas')" style="padding:8px 14px;">💾 Salvar percentuais</button>
+        <span id="rt-gas-soma" class="hint" style="margin:0;"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ANÁLISES ETE (internas) -->
+  <div id="tab-anaint" class="tab-content">
+    <div class="card">
+      <h3>Adicionar análise — ETE (PORT 19A)</h3>
+      <div class="form-grid">
+        <div class="fld"><label>Data</label><input type="date" id="ai-d"></div>
+        <div class="fld"><label>pH (6,0–10,0)</label><input type="text" inputmode="decimal" id="ai-ph"></div>
+        <div class="fld"><label>Temperatura °C (máx 40)</label><input type="text" inputmode="decimal" id="ai-temp"></div>
+        <div class="fld"><label>Zinco (máx 5,0 ppm)</label><input type="text" inputmode="decimal" id="ai-zn"></div>
+        <div class="fld"><label>Níquel (máx 2,0 ppm)</label><input type="text" inputmode="decimal" id="ai-ni"></div>
+        <div class="fld"><label>Cobre (máx 1,5 ppm)</label><input type="text" inputmode="decimal" id="ai-cu"></div>
+        <div class="fld"><label>Sulfato (máx 1000 ppm)</label><input type="text" inputmode="decimal" id="ai-so4"></div>
+      </div>
+      <div class="calc">Faixa: pH 6,0–10,0 · Temperatura máx 40°C · Zinco máx 5,0 · Níquel máx 2,0 · Cobre máx 1,5 · Sulfato máx 1000 ppm.</div>
+      <button class="btn green" onclick="addAnaInt()">➕ Adicionar</button>
+    </div>
+    <div class="card"><h3>Análises ETE (PORT 19A) <span class="count" id="cnt-anaint"></span></h3><div class="tbl-wrap"><table id="tbl-anaint"></table></div></div>
+  </div>
+
+  <!-- ANÁLISES EXTERNAS -->
+  <div id="tab-anaext" class="tab-content">
+    <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;">
+      <button class="btn blue" id="pbtn-19a" onclick="mostrarPort('19A')">Portaria 19A</button>
+      <button class="btn gray" id="pbtn-888" onclick="mostrarPort('888')">Portaria 888</button>
+    </div>
+    <div id="ext-19a">
+      <div class="card">
+        <h3>Adicionar parecer externo — Portaria 19A (Aqualab)</h3>
+        <div class="form-grid">
+          <div class="fld"><label>Data</label><input type="date" id="ae-d"></div>
+          <div class="fld"><label>Nº Relatório</label><input type="text" id="ae-rel"></div>
+          <div class="fld"><label>Parecer</label><select id="ae-parecer"><option value="CONFORME">CONFORME</option><option value="NÃO CONFORME">NÃO CONFORME</option></select></div>
+          <div class="fld"><label>PDF da análise</label><input type="file" id="ae-pdf" accept="application/pdf" style="display:none" onchange="lerPdfExt(this)"><button class="btn gray" type="button" onclick="document.getElementById('ae-pdf').click()" style="padding:9px 12px;">📎 Ler PDF e adicionar</button></div>
+        </div>
+        <button class="btn green" onclick="addAnaExt()">➕ Adicionar</button>
+      </div>
+      <div class="card"><h3>📊 Conformidade — Portaria 19A</h3><div class="dash-wrap" style="height:220px;"><canvas id="ch-conf"></canvas></div></div>
+      <div class="card">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px;">
+          <h3 style="margin:0;">Pareceres 19A <span class="count" id="cnt-anaext"></span></h3>
+          <label style="font-size:12px;color:var(--muted);font-weight:700;">Ano:</label>
+          <select id="ae-ano" onchange="renderAnaExt()" style="border:1px solid var(--border);border-radius:8px;padding:6px 10px;font-size:14px;"></select>
+          <button class="btn red" onclick="limparAnoExt()" style="padding:7px 12px;">🗑️ Limpar ano</button>
+        </div>
+        <div class="tbl-wrap"><table id="tbl-anaext"></table></div>
+      </div>
+    </div>
+    <div id="ext-888" style="display:none">
+      <div class="card">
+        <h3>Adicionar parecer externo — Portaria 888</h3>
+        <div class="form-grid">
+          <div class="fld"><label>Data</label><input type="date" id="a8-d"></div>
+          <div class="fld"><label>Nº Relatório</label><input type="text" id="a8-rel"></div>
+          <div class="fld"><label>Ponto de Coleta</label><input type="text" id="a8-ponto"></div>
+          <div class="fld"><label>Parecer</label><select id="a8-parecer"><option value="CONFORME">CONFORME</option><option value="NÃO CONFORME">NÃO CONFORME</option></select></div>
+          <div class="fld"><label>PDF da análise</label><input type="file" id="a8-pdf" accept="application/pdf" style="display:none" onchange="lerPdf888(this)"><button class="btn gray" type="button" onclick="document.getElementById('a8-pdf').click()" style="padding:9px 12px;">📎 Ler PDF e adicionar</button></div>
+        </div>
+        <div class="hint" style="margin:0 0 6px;">Parâmetros e limites da Portaria 888 serão configurados quando você enviar um PDF de exemplo. Por enquanto lê data e nº e você marca o parecer.</div>
+        <button class="btn green" onclick="addAna888()">➕ Adicionar</button>
+      </div>
+      <div class="card"><h3>📊 Conformidade — Portaria 888</h3><div class="dash-wrap" style="height:220px;"><canvas id="ch-conf8"></canvas></div></div>
+      <div class="card">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px;">
+          <h3 style="margin:0;">Análises 888 <span class="count" id="cnt-a8"></span></h3>
+          <label style="font-size:12px;color:var(--muted);font-weight:700;">Ano:</label>
+          <select id="a8-ano" onchange="renderAna888()" style="border:1px solid var(--border);border-radius:8px;padding:6px 10px;font-size:14px;"></select>
+          <button class="btn red" onclick="limparAno888()" style="padding:7px 12px;">🗑️ Limpar ano</button>
+        </div>
+        <div class="tbl-wrap"><table id="tbl-a8"></table></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ETA -->
+  <div id="tab-eta" class="tab-content">
+    <div class="card">
+      <h3>Adicionar medição — Análises ETA</h3>
+      <div class="fld" style="max-width:220px;margin-bottom:12px;"><label>Data</label><input type="date" id="et-d"></div>
+      <div class="tbl-wrap"><table class="eta-form">
+        <thead><tr><th>Ponto</th><th>Cloro Livre (ppm)</th><th>pH</th><th>Temperatura (°C)</th><th>Faixa de referência</th></tr></thead>
+        <tbody>
+          <tr><td><b>Poço Profundo</b></td><td><input type="text" inputmode="decimal" id="etr-cloro-0"></td><td><input type="text" inputmode="decimal" id="etr-ph-0"></td><td><input type="text" inputmode="decimal" id="etr-temp-0"></td><td class="hint">Cloro 0,2–5 · pH 6,5–8,5 · Temp máx 40°C</td></tr>
+          <tr><td><b>Caixa d'água 170m³</b></td><td><input type="text" inputmode="decimal" id="etr-cloro-1"></td><td><input type="text" inputmode="decimal" id="etr-ph-1"></td><td><input type="text" inputmode="decimal" id="etr-temp-1"></td><td class="hint">Cloro 0,2–5 · pH 6,5–8,5 · Temp máx 40°C</td></tr>
+          <tr><td><b>Água Abrandada</b></td><td style="text-align:center;color:var(--muted)">—</td><td><input type="text" inputmode="decimal" id="etr-ph-2"></td><td style="text-align:center;color:var(--muted)">—</td><td class="hint">pH 6,2–8,0</td></tr>
+          <tr><td><b>Água Abrandada BIO</b></td><td style="text-align:center;color:var(--muted)">—</td><td><input type="text" inputmode="decimal" id="etr-ph-3"></td><td style="text-align:center;color:var(--muted)">—</td><td class="hint">pH 6,2–8,0</td></tr>
+          <tr><td><b>Água Abrandada Caldeira</b></td><td style="text-align:center;color:var(--muted)">—</td><td><input type="text" inputmode="decimal" id="etr-ph-4"></td><td style="text-align:center;color:var(--muted)">—</td><td class="hint">pH 10,5–11,5</td></tr>
+        </tbody>
+      </table></div>
+      <button class="btn green" onclick="addEta()" style="margin-top:12px;">➕ Salvar medições</button>
+    </div>
+    <div class="card"><h3>Medições ETA <span class="count" id="cnt-eta"></span></h3><div class="tbl-wrap"><table id="tbl-eta"></table></div></div>
+  </div>
+
+  <!-- PRODUTOS ETE -->
+  <div id="tab-prod" class="tab-content">
+    <div class="card">
+      <h3>Adicionar consumo — Produtos ETE</h3>
+      <div class="form-grid">
+        <div class="fld"><label>Data</label><input type="date" id="pr-d"></div>
+        <div class="fld"><label>Produto</label><input type="text" id="pr-p" list="lst-prod"><datalist id="lst-prod"></datalist></div>
+        <div class="fld"><label>Consumo (kg/L)</label><input type="text" inputmode="decimal" id="pr-kg"></div>
+        <div class="fld"><label>Valor (R$)</label><input type="text" inputmode="decimal" id="pr-val"></div>
+      </div>
+      <button class="btn green" onclick="addProd()">➕ Adicionar</button>
+    </div>
+    <div class="card"><h3>Consumos de produtos <span class="count" id="cnt-prod"></span></h3><div class="tbl-wrap"><table id="tbl-prod"></table></div></div>
+  </div>
+
+  <!-- ENVIO -->
+  <div id="tab-envio" class="tab-content">
+    <div class="card">
+      <h3>✉️ Enviar dados por e-mail</h3>
+      <div class="form-grid">
+        <div class="fld"><label>Destinatário(s)</label><input type="text" id="em-to" placeholder="nome@agrivalle.com.br"></div>
+        <div class="fld"><label>Assunto</label><input type="text" id="em-subj" value="Base Utilidades Agrivalle - atualização"></div>
+      </div>
+      <div class="hint" style="margin:0;">No celular, abre o app de e-mail já com a planilha anexada. No computador, baixa a planilha e abre um e-mail em branco para você anexar o arquivo.</div>
+    </div>
+    <div class="export-card" onclick="enviarEmail()">
+      <div class="export-icon">📧</div>
+      <div class="export-info"><div class="export-title">Enviar por e-mail</div><div class="export-sub">Anexa a Base_Utilidades_Agrivalle.xlsx e abre o e-mail (Outlook/Gmail)</div></div>
+    </div>
+    <div class="export-card" onclick="exportarXlsx()">
+      <div class="export-icon">📊</div>
+      <div class="export-info"><div class="export-title">Exportar planilha (.xlsx)</div><div class="export-sub">Salva a Base_Utilidades_Agrivalle.xlsx no aparelho</div></div>
+    </div>
+    <div class="export-card" onclick="baixarBackup()">
+      <div class="export-icon">💾</div>
+      <div class="export-info"><div class="export-title">Backup (.json)</div><div class="export-sub">Cópia de segurança de todos os dados lançados</div></div>
+    </div>
+    <div class="export-card" onclick="document.getElementById('inp-backup').click()">
+      <div class="export-icon">↩️</div>
+      <div class="export-info"><div class="export-title">Restaurar backup</div><div class="export-sub">Carrega os dados de um arquivo .json de backup</div></div>
+    </div>
+    <input type="file" id="inp-backup" accept=".json" style="display:none" onchange="restaurarBackup(this)">
+  </div>
+
+  <!-- CADASTRO (protegido por senha) -->
+  <div id="tab-cadastro" class="tab-content">
+    <div class="card">
+      <h3>📋 Parâmetros coletados (referência)</h3>
+      <div class="hint" style="margin-bottom:10px;">O que o app registra em cada categoria. Em todos os lançamentos também vai o Responsável.</div>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>Categoria</th><th>Parâmetros coletados</th></tr></thead>
+        <tbody>
+          <tr><td>💧 Água (mensal)</td><td>Ano · Mês · SAAE Volume (m³) · SAAE Valor poço (R$) · SAAE Tarifa (R$) · Point One Volume (m³) · Point One Valor (R$)</td></tr>
+          <tr><td>💧 Água — leituras diárias</td><td>Data · Leitura Poço artesiano (m³) · Leitura Caixa 170 m³ (m³) → consumo diário calculado</td></tr>
+          <tr><td>⚡ Energia (mensal)</td><td>Ano · Mês · Consumo (kWh) · Custo Livre (R$) · Custo Cativo (R$) · Economia (R$ e %, calculada)</td></tr>
+          <tr><td>🔥 Gás (mensal)</td><td>Ano · Mês · Volume (m³) · Valor (R$)</td></tr>
+          <tr><td>🧪 Análises ETE — PORT 19A</td><td>Data · pH (6,0–10,0) · Temperatura (máx 40°C) · Zinco (máx 5,0 ppm) · Níquel (máx 2,0 ppm) · Cobre (máx 1,5 ppm) · Sulfato (máx 1000 ppm)</td></tr>
+          <tr><td>📄 Análises Externas</td><td>Data · Nº Relatório · Parecer (CONFORME / NÃO CONFORME)</td></tr>
+          <tr><td>💧 Análises ETA (por ponto)</td><td>Data · Ponto · Cloro Livre · pH · Temperatura.<br><b>Poço Profundo</b> e <b>Caixa d'água 170m³</b>: Cloro 0,2–5,0 ppm · pH 6,5–8,5 · Temp máx 40°C.<br><b>Água Abrandada</b> e <b>Abrandada BIO</b>: pH 6,2–8,0.<br><b>Água Abrandada Caldeira</b>: pH 10,5–11,5.</td></tr>
+          <tr><td>⚗️ Produtos ETE</td><td>Data · Produto · Consumo (kg/L) · Valor (R$)</td></tr>
+          <tr><td>👷 Todos os lançamentos</td><td>Responsável (obrigatório)</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+    <div class="card">
+      <h3>👷 Responsáveis</h3>
+      <div class="form-grid"><div class="fld"><label>Nome</label><input type="text" id="cad-resp-in" onkeydown="if(event.key==='Enter')addResp()"></div></div>
+      <button class="btn green" onclick="addResp()">➕ Adicionar</button>
+      <div class="tbl-wrap"><table id="tbl-cad-resp"></table></div>
+    </div>
+    <div class="card">
+      <h3>⚗️ Produtos ETE</h3>
+      <div class="form-grid"><div class="fld"><label>Produto</label><input type="text" id="cad-prod-in" onkeydown="if(event.key==='Enter')addProdCad()"></div></div>
+      <button class="btn green" onclick="addProdCad()">➕ Adicionar</button>
+      <div class="tbl-wrap"><table id="tbl-cad-prod"></table></div>
+    </div>
+    <div class="card">
+      <h3>✉️ E-mails destinatários</h3>
+      <div class="form-grid"><div class="fld"><label>E-mail</label><input type="email" id="cad-email-in" onkeydown="if(event.key==='Enter')addEmail()"></div></div>
+      <button class="btn green" onclick="addEmail()">➕ Adicionar</button>
+      <div class="tbl-wrap"><table id="tbl-cad-email"></table></div>
+    </div>
+  </div>
+
+</div>
+
+
+<!-- MODAL OCORRÊNCIA (fora da faixa) -->
+<div class="modal" id="modal-ocorrencia">
+  <div class="box">
+    <div style="font-weight:700;font-size:16px;color:var(--danger);">⚠ Ocorrência — valor fora da faixa</div>
+    <div class="hint" id="oc-avisos" style="margin:0;"></div>
+    <div class="fld"><label>Fato (o que ocorreu)</label><textarea id="oc-fato" rows="2" placeholder="Descreva o que foi observado"></textarea></div>
+    <div class="fld"><label>Causa</label><textarea id="oc-causa" rows="2" placeholder="Provável causa"></textarea></div>
+    <div class="fld"><label>Ação</label><textarea id="oc-acao" rows="2" placeholder="Ação tomada / a tomar"></textarea></div>
+    <div style="display:flex;gap:10px;">
+      <button class="btn green" onclick="confirmarOcorrencia()">Salvar com ocorrência</button>
+      <button class="btn gray" onclick="cancelarOcorrencia()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- NAVEGAÇÃO INFERIOR (rodapé, estilo Rondas) -->
+<div class="bottom-nav">
+  <button class="nav-item active" data-tab="home" onclick="abrirTab('home')"><span class="nav-icon">🏠</span><span>Início</span></button>
+  <button class="nav-item" data-tab="dash" onclick="abrirTab('dash')"><span class="nav-icon">📊</span><span>Dashboard</span></button>
+  <button class="nav-item" data-tab="prod" onclick="abrirTab('prod')"><span class="nav-icon">⚗️</span><span>Produtos</span></button>
+  <button class="nav-item" data-tab="envio" onclick="abrirTab('envio')"><span class="nav-icon">📤</span><span>Envio</span></button>
+  <button class="nav-item" data-tab="cadastro" onclick="abrirTab('cadastro')"><span class="nav-icon">🗂️</span><span>Cadastro</span></button>
+  <button class="nav-item" data-tab="help" onclick="abrirTab('help')"><span class="nav-icon">❓</span><span>Ajuda</span></button>
+</div>
+
+<script>
+/* =====================================================================
+   CONFIG
+   ===================================================================== */
+const EMAIL_PADRAO = '';               // (opcional) destinatário fixo; a lista da aba Cadastro tem prioridade
+const SENHA_CADASTRO = 'Jiraya561@';    // troque aqui a senha da aba Cadastro
+
+/* =====================================================================
+   MODELO DE DADOS (mesmo schema do dashboard: U)
+   ===================================================================== */
+const MESNOME=['JANEIRO','FEVEREIRO','MARÇO','ABRIL','MAIO','JUNHO','JULHO','AGOSTO','SETEMBRO','OUTUBRO','NOVEMBRO','DEZEMBRO'];
+const MESN3=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+const MESNUM={'JANEIRO':1,'FEVEREIRO':2,'MARÇO':3,'MARCO':3,'ABRIL':4,'MAIO':5,'JUNHO':6,'JULHO':7,'AGOSTO':8,'SETEMBRO':9,'OUTUBRO':10,'NOVEMBRO':11,'DEZEMBRO':12};
+
+let U = {agua:[],agua_diario:[],energia:[],gas:[],ana_int:[],ana_ext:[],ana_888:[],eta:[],prod:[]};
+let dashboardTemplate = null;   // texto do dashboard_utilidades.html carregado
+let CFG = {responsaveis:[],produtos:[],emails:[],ultimoResp:'',rateio:[]};
+const CFG_KEY='alimentador_utilidades_v1_cfg';
+const RATEIO_DEFAULT=[
+ {cc:'2060002000',celula:'PRODUÇÃO FERTILIZANTES',agua:7,energia:7,gas:0},
+ {cc:'2060003000',celula:'FORMULAÇÃO BIORREATOR',agua:30,energia:20,gas:89},
+ {cc:'2060004000',celula:'FORMULAÇÃO BIO SÓLIDOS',agua:30,energia:41,gas:0},
+ {cc:'2060009000',celula:'PRODUÇÃO INGREDIENTE ATIVO',agua:0,energia:0,gas:0},
+ {cc:'2060014000',celula:'FORMULAÇÃO BIO LIQUIDOS',agua:7,energia:6,gas:0},
+ {cc:'2060019000',celula:'ENVASE FERTILIZANTES',agua:7,energia:3,gas:0},
+ {cc:'2060020000',celula:'ENVASE BIO SÓLIDOS',agua:0,energia:4,gas:0},
+ {cc:'2060021000',celula:'ENVASE BIO LIQUIDOS',agua:7,energia:3,gas:0},
+ {cc:'0',celula:'ADM',agua:10,energia:6,gas:2},
+ {cc:'0',celula:'P&D',agua:2,energia:10,gas:9}
+];
+function salvarCfg(){ try{ localStorage.setItem(CFG_KEY, JSON.stringify(CFG)); }catch(e){} }
+function carregarCfg(){ try{ const s=localStorage.getItem(CFG_KEY); if(s) CFG=Object.assign({responsaveis:[],produtos:[],emails:[],ultimoResp:'',rateio:[]}, JSON.parse(s)); }catch(e){} if(!CFG.rateio||!CFG.rateio.length||!('agua' in (CFG.rateio[0]||{}))) CFG.rateio=RATEIO_DEFAULT.map(function(x){return Object.assign({},x);}); }
+function respAtual(){ return (($('resp-atual')&&$('resp-atual').value)||'').trim(); }
+const RATEIO_UTIS={agua:{label:'Água',get:function(){return U.agua;},total:function(r){return (r.saae_poco||0)+(r.po_val||0);}},energia:{label:'Energia',get:function(){return U.energia;},total:function(r){return (r.livre||0);}},gas:{label:'Gás',get:function(){return U.gas;},total:function(r){return (r.valor||0);}}};
+function renderRateio(util){
+  var cfgu=RATEIO_UTIS[util]; if(!cfgu) return; var sel=$('rt-'+util+'-mes'); if(!sel) return;
+  var ay=new Date().getFullYear(); var meses=cfgu.get().filter(function(r){return r.ano===ay;}).sort(function(a,b){return a.mes-b.mes;}); var atual=sel.value;
+  if(!meses.length){ sel.innerHTML='<option value="">—</option>'; } else { sel.innerHTML=meses.map(function(r){return '<option value="'+r.mes+'">'+MESN3[r.mes-1]+'/'+r.ano+'</option>';}).join(''); sel.value=meses.some(function(r){return String(r.mes)===atual;})?atual:String(meses[meses.length-1].mes); }
+  var mes=parseInt(sel.value,10); var rec=cfgu.get().find(function(r){return r.ano===ay&&r.mes===mes;}); var total=rec?cfgu.total(rec):0;
+  if($('rt-'+util+'-total')) $('rt-'+util+'-total').textContent=rec?('Total do mês: '+BRL(total)):'Sem dados do mês.';
+  var rt=CFG.rateio||[]; var soma=rt.reduce(function(sm,x){return sm+(+x[util]||0);},0);
+  var t=$('tbl-rateio-'+util); if(!t) return;
+  t.innerHTML='<thead><tr><th>Centro de Custo</th><th>Célula</th><th>%</th><th>Valor (R$)</th></tr></thead><tbody>'+
+    rt.map(function(x,i){return '<tr><td>'+(x.cc||'—')+'</td><td>'+String(x.celula||'').replace(/</g,'&lt;')+'</td>'+
+      '<td><input type="text" inputmode="decimal" id="rt-'+util+'-pct-'+i+'" value="'+(x[util]!=null?x[util]:'')+'" oninput="recalcRateio(&#39;'+util+'&#39;)" style="border:1px solid var(--border);border-radius:6px;padding:5px 8px;width:64px;"> %</td>'+
+      '<td id="rt-'+util+'-val-'+i+'">'+BRL(total*(+x[util]||0)/100)+'</td></tr>';}).join('')+
+      '<tr style="font-weight:700;background:var(--bg)"><td>TOTAL</td><td>—</td><td id="rt-'+util+'-soma-cell">'+(Math.round(soma*100)/100)+'%</td><td>'+BRL(total*soma/100)+'</td></tr></tbody>';
+  recalcRateio(util);
+}
+function recalcRateio(util){
+  var cfgu=RATEIO_UTIS[util]; var sel=$('rt-'+util+'-mes'); var ay=new Date().getFullYear(); var mes=parseInt(sel&&sel.value,10);
+  var rec=cfgu.get().find(function(r){return r.ano===ay&&r.mes===mes;}); var total=rec?cfgu.total(rec):0; var soma=0;
+  (CFG.rateio||[]).forEach(function(x,i){ var pe=$('rt-'+util+'-pct-'+i); var p=pe?(num(pe.value)||0):(+x[util]||0); soma+=p; var vc=$('rt-'+util+'-val-'+i); if(vc) vc.textContent=BRL(total*p/100); });
+  soma=Math.round(soma*100)/100; var sc=$('rt-'+util+'-soma-cell'); if(sc) sc.textContent=soma+'%';
+  if($('rt-'+util+'-soma')) $('rt-'+util+'-soma').innerHTML=(Math.abs(soma-100)<0.01)?'<span style="color:var(--success)">Soma 100% ✓</span>':'<span style="color:var(--warning)">⚠ Soma '+soma+'%</span>';
+}
+function salvarRateio(util){
+  (CFG.rateio||[]).forEach(function(x,i){ var pe=$('rt-'+util+'-pct-'+i); if(pe) x[util]=num(pe.value)||0; });
+  salvarCfg(); renderRateio(util); setStatus('Percentuais de rateio ('+RATEIO_UTIS[util].label+') salvos.');
+}
+function exigeResp(){ const r=respAtual(); if(!r){ alert('Informe o Responsável no topo antes de salvar.'); const el=$('resp-atual'); if(el) el.focus(); return null; } if(CFG.ultimoResp!==r){ CFG.ultimoResp=r; salvarCfg(); } return r; }
+let editKey = {};               // controle de edição por aba
+
+const LS_KEY='alimentador_utilidades_v1';
+
+/* ---------- filtro de exibição: só a semana vigente ---------- */
+let verTudo=false;
+function toggleVerTudo(){ verTudo=!verTudo; const b=$('btn-vertudo'); if(b) b.textContent=verTudo?'👁️ Ver: Tudo':'👁️ Ver: Semana vigente'; renderTudo(); }
+function toggleAcoes(){ var b=document.getElementById('acoes-bar'); if(b) b.classList.toggle('collapsed'); }
+function _fmtD(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function semanaBounds(){ const h=new Date(); const dow=(h.getDay()+6)%7; const seg=new Date(h); seg.setDate(h.getDate()-dow); const dom=new Date(seg); dom.setDate(seg.getDate()+6); return [_fmtD(seg),_fmtD(dom)]; }
+function naSemana(d){ if(!d) return false; const b=semanaBounds(); return d>=b[0]&&d<=b[1]; }
+function noMesAtual(r){ const n=new Date(); return r.ano===n.getFullYear() && r.mes===(n.getMonth()+1); }
+function filtrarExib(arr,monthly){ const idx=arr.map((r,i)=>({r,i})); if(verTudo) return idx; return idx.filter(o=> monthly ? noMesAtual(o.r) : naSemana(o.r.d)); }
+function contagem(arr,monthly){ const fn=filtrarExib(arr,monthly).length; return verTudo?('('+arr.length+')'):('('+fn+' na semana · '+arr.length+' no total)'); }
+function vazioMsg(cols){ return '<tr><td class="empty" colspan="'+cols+'">'+(verTudo?'Sem registros.':'Nada no período vigente. Clique em “Ver: Tudo” para o histórico.')+'</td></tr>'; }
+
+/* ---------- utilidades ---------- */
+const $=id=>document.getElementById(id);
+function num(v){ if(v===''||v==null) return null; let str=String(v).trim(); if(!str) return null; if(str.indexOf(',')>=0){ str=str.replace(/\./g,'').replace(',','.'); } const n=parseFloat(str); return isNaN(n)?null:Math.round(n*1000)/1000; }
+const BRL=v=>(v==null||isNaN(v))?'—':Number(v).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+const NUM=v=>(v==null||isNaN(v))?'—':Number(v).toLocaleString('pt-BR',{maximumFractionDigits:2});
+const dBR=s=>s?s.split('-').reverse().join('/'):'—';   // yyyy-mm-dd -> dd/mm/yyyy
+function setStatus(m){ var e=$('status'); if(e) e.textContent=m; }
+
+function salvar(){ try{ localStorage.setItem(LS_KEY, JSON.stringify(U)); }catch(e){ alert('⚠ Armazenamento cheio (possivelmente PDFs grandes). Faça um Backup (.json) e considere remover PDFs antigos.'); } }
+function carregarLS(){ try{ const s=localStorage.getItem(LS_KEY); if(s){ const o=JSON.parse(s); U=Object.assign({agua:[],agua_diario:[],energia:[],gas:[],ana_int:[],ana_ext:[],ana_888:[],eta:[],prod:[]}, o); } }catch(e){} }
+
+/* ---------- abas ---------- */
+function abrirTab(t){
+  if(t==='cadastro' && sessionStorage.getItem('cad_auth')!=='1'){
+    const s=prompt('Senha do Cadastro:');
+    if(s===null) return;
+    if(s!==SENHA_CADASTRO){ alert('Senha incorreta.'); return; }
+    sessionStorage.setItem('cad_auth','1');
+  }
+  var _cats=['agua','energia','gas','anaint','anaext','eta','prod'];
+  if(_cats.indexOf(t)>=0 && !respAtual()){ alert('👷 Selecione o Responsável na tela inicial antes de abrir.'); return; }
+  document.querySelectorAll('.tab-content').forEach(e=>e.classList.remove('ativo'));
+  document.querySelectorAll('.nav-item').forEach(e=>e.classList.remove('active'));
+  $('tab-'+t).classList.add('ativo');
+  var _nv=document.querySelector('.nav-item[data-tab="'+t+'"]'); if(_nv) _nv.classList.add('active');
+  if(t==='envio' && !$('em-to').value) $('em-to').value=(CFG.emails&&CFG.emails.length?CFG.emails.join(', '):EMAIL_PADRAO);
+  var _vb=$('voltar-bar'); if(_vb) _vb.style.display=(t==='home')?'none':'';
+  if(t==='dash') renderDash();
+  if(t==='anaext') renderAnaExt();
+  if(t==='cadastro') renderCadastro();
+  var _rb=$('resp-bar'); if(_rb) _rb.style.display=(t==='home')?'':'none';
+}
+
+/* ---------- popular selects de mês ---------- */
+(function(){
+  ['ag-mes','en-mes','gs-mes'].forEach(id=>{
+    const sel=$(id); if(!sel) return;
+    MESNOME.forEach((m,i)=>{const o=document.createElement('option');o.value=i+1;o.textContent=(i+1)+' - '+m.charAt(0)+m.slice(1).toLowerCase();sel.appendChild(o);});
+  });
+})();
+
+/* =====================================================================
+   ÁGUA  (upsert por ano+mes)
+   ===================================================================== */
+function addAgua(){
+  const ano=parseInt($('ag-ano').value,10), mes=parseInt($('ag-mes').value,10);
+  if(!ano||!mes){ alert('Informe Ano e Mês.'); return; }
+  const resp=exigeResp(); if(resp===null) return;
+  const reg={ano,mes,saae_m3:num($('ag-saae_m3').value),saae_poco:num($('ag-saae_poco').value),saae_tarifa:null,po_m3:num($('ag-po_m3').value),po_val:num($('ag-po_val').value),resp};
+  upsertMes(U.agua,reg);
+  ['ag-saae_m3','ag-saae_poco','ag-po_m3','ag-po_val'].forEach(i=>$(i).value='');
+  persistir(); renderAgua(); renderAguaDia(); setStatus('Água: '+MESNOME[mes-1]+'/'+ano+' salvo.');
+}
+function renderAgua(){
+  U.agua.sort((a,b)=>(a.ano-b.ano)||(a.mes-b.mes));
+  const _ay=new Date().getFullYear();
+  const t=$('tbl-agua'); const L=U.agua.map((r,i)=>({r,i})).filter(o=>o.r.ano===_ay);
+  $('cnt-agua').textContent='('+L.length+' em '+_ay+' · '+U.agua.length+' no total)';
+  if(!L.length){ t.innerHTML='<tr><td class="empty" colspan="8">Sem registros em '+_ay+'.</td></tr>'; return; }
+  t.innerHTML='<thead><tr><th>Ano</th><th>Mês</th><th>SAAE m³</th><th>SAAE Valor</th><th>Point One m³</th><th>Point One R$</th><th>Valor Total</th><th></th></tr></thead><tbody>'+
+    L.map(({r,i})=>{ const tot=(r.saae_poco||0)+(r.po_val||0); return '<tr><td>'+r.ano+'</td><td>'+MESN3[r.mes-1]+'</td><td>'+NUM(r.saae_m3)+'</td><td>'+BRL(r.saae_poco)+'</td><td>'+NUM(r.po_m3)+'</td><td>'+BRL(r.po_val)+'</td><td><b>'+BRL(tot||null)+'</b></td>'+
+      '<td><button class="edit" onclick="editAgua('+i+')">✎</button><button class="del" onclick="delReg(U.agua,'+i+',renderAgua)">✕</button></td></tr>'; }).join('')+'</tbody>';
+}
+function editAgua(i){const r=U.agua[i];$('ag-ano').value=r.ano;$('ag-mes').value=r.mes;$('ag-saae_m3').value=r.saae_m3??'';$('ag-saae_poco').value=r.saae_poco??'';$('ag-po_m3').value=r.po_m3??'';$('ag-po_val').value=r.po_val??'';window.scrollTo({top:0,behavior:'smooth'});}
+
+/* ---------- Água: leituras diárias de hidrômetro (leitura acumulada) ---------- */
+function addAguaDia(){
+  const d=$('ad-d').value; if(!d){ alert('Informe a Data.'); return; }
+  const resp=exigeResp(); if(resp===null) return;
+  const poco=num($('ad-poco').value), cx170=num($('ad-cx170').value), reuso=num($('ad-reuso').value), ete=num($('ad-ete').value);
+  if(poco==null && cx170==null && reuso==null && ete==null){ alert('Informe ao menos uma leitura (Poço, Caixa 170, Reuso ou ETE).'); return; }
+  const k=U.agua_diario.findIndex(r=>r.d===d);
+  if(k>=0){ const ex=U.agua_diario[k]; if(poco!=null)ex.poco=poco; if(cx170!=null)ex.cx170=cx170; if(reuso!=null)ex.reuso=reuso; if(ete!=null)ex.ete=ete; ex.resp=resp; }
+  else U.agua_diario.push({d,poco,cx170,reuso,ete,resp});
+  ['ad-poco','ad-cx170','ad-reuso','ad-ete'].forEach(x=>$(x).value='');
+  persistir(); renderAguaDia(); setStatus('Leitura de '+dBR(d)+' salva.');
+}
+function renderAguaDia(){
+  const arr=[...U.agua_diario].sort((a,b)=>a.d<b.d?-1:1);
+  $('cnt-agua-dia').textContent=contagem(U.agua_diario,false);
+  const wc=arr.map((r,k)=>{
+    const prev=arr[k-1];
+    const cp=(r.poco!=null&&prev&&prev.poco!=null)?Math.round((r.poco-prev.poco)*1000)/1000:null;
+    const cc=(r.cx170!=null&&prev&&prev.cx170!=null)?Math.round((r.cx170-prev.cx170)*1000)/1000:null;
+    const cr=(r.reuso!=null&&prev&&prev.reuso!=null)?Math.round((r.reuso-prev.reuso)*1000)/1000:null;
+    const ce=(r.ete!=null&&prev&&prev.ete!=null)?Math.round((r.ete-prev.ete)*1000)/1000:null;
+    return {r,cp,cc,cr,ce,oi:U.agua_diario.indexOf(r)};
+  });
+  const L = verTudo?wc:wc.filter(o=>naSemana(o.r.d));
+  const t=$('tbl-agua-dia');
+  if(!L.length){ t.innerHTML=vazioMsg(10); }
+  else t.innerHTML='<thead><tr><th>Data</th><th>Poço (m³)</th><th>Cons. Poço</th><th>Cx170 (m³)</th><th>Cons. Cx170</th><th>Reuso (m³)</th><th>Cons. Reuso</th><th>ETE (m³)</th><th>Cons. ETE</th><th></th></tr></thead><tbody>'+
+    L.map(o=>'<tr><td>'+dBR(o.r.d)+'</td><td>'+NUM(o.r.poco)+'</td><td>'+(o.cp!=null?NUM(o.cp):'—')+'</td><td>'+NUM(o.r.cx170)+'</td><td>'+(o.cc!=null?NUM(o.cc):'—')+'</td><td>'+NUM(o.r.reuso)+'</td><td>'+(o.cr!=null?NUM(o.cr):'—')+'</td><td>'+NUM(o.r.ete)+'</td><td>'+(o.ce!=null?NUM(o.ce):'—')+'</td>'+
+      '<td><button class="del" onclick="delReg(U.agua_diario,'+o.oi+',renderAguaDia)">✕</button></td></tr>').join('')+'</tbody>';
+  // comparativo por mês
+  const meses={};
+  wc.forEach(o=>{ const mk=o.r.d.slice(0,7); if(!meses[mk]) meses[mk]={p:0,c:0,hp:false,hc:false}; if(o.cp!=null){meses[mk].p+=o.cp;meses[mk].hp=true;} if(o.cc!=null){meses[mk].c+=o.cc;meses[mk].hc=true;} });
+  const ct=$('tbl-agua-comp'); const keys=Object.keys(meses).sort();
+  if(!keys.length){ ct.innerHTML='<tbody><tr><td class="empty">Lance ao menos duas leituras para calcular o consumo diário.</td></tr></tbody>'; return; }
+  ct.innerHTML='<thead><tr><th>Mês</th><th>Consumo CX170 (soma diária)</th><th>SAAE + Point One (mês fechado)</th><th>Diferença</th><th>Consumo Poço (soma diária)</th></tr></thead><tbody>'+
+    keys.map(mk=>{ const y=mk.slice(0,4),m=mk.slice(5,7); const mm=U.agua.find(r=>r.ano===+y&&r.mes===+m);
+      const totalMes=mm?((mm.saae_m3||0)+(mm.po_m3||0)):null;
+      const somaC=meses[mk].hc?Math.round(meses[mk].c*1000)/1000:null;
+      const somaP=meses[mk].hp?Math.round(meses[mk].p*1000)/1000:null;
+      const dif=(somaC!=null&&totalMes!=null)?Math.round((somaC-totalMes)*1000)/1000:null;
+      const difTxt=dif!=null?('<b style="color:'+(Math.abs(dif)<=((totalMes||0)*0.05)?'var(--success)':'var(--warning)')+'">'+(dif>0?'+':'')+NUM(dif)+'</b>'):'—';
+      return '<tr><td>'+MESN3[+m-1]+'/'+y+'</td><td>'+(somaC!=null?NUM(somaC):'—')+'</td><td>'+(totalMes!=null?NUM(totalMes):'—')+'</td><td>'+difTxt+'</td><td>'+(somaP!=null?NUM(somaP):'—')+'</td></tr>'; }).join('')+'</tbody>';
+}
+
+/* =====================================================================
+   ENERGIA
+   ===================================================================== */
+function calcEnergia(){
+  const livre=num($('en-livre').value), cativo=num($('en-cativo').value);
+  if(livre!=null&&cativo!=null){ const eco=Math.round((cativo-livre)*100)/100; const pct=cativo?Math.round(eco/cativo*1000)/10:0; $('en-calc').innerHTML='Economia: <b>'+BRL(eco)+'</b> ( <b>'+pct+'%</b> )'; }
+  else $('en-calc').textContent='Economia calculada automaticamente a partir de Livre e Cativo.';
+}
+function addEnergia(){
+  const ano=parseInt($('en-ano').value,10), mes=parseInt($('en-mes').value,10);
+  if(!ano||!mes){ alert('Informe Ano e Mês.'); return; }
+  const resp=exigeResp(); if(resp===null) return;
+  const kwh=num($('en-kwh').value), livre=num($('en-livre').value), cativo=num($('en-cativo').value);
+  let eco=null,pct=null;
+  if(livre!=null&&cativo!=null){ eco=Math.round((cativo-livre)*100)/100; pct=cativo?Math.round(eco/cativo*1000)/1000:null; }
+  upsertMes(U.energia,{ano,mes,kwh,livre,cativo,eco,pct,resp});
+  ['en-kwh','en-livre','en-cativo'].forEach(i=>$(i).value=''); calcEnergia();
+  persistir(); renderEnergia(); setStatus('Energia: '+MESNOME[mes-1]+'/'+ano+' salvo.');
+}
+function renderEnergia(){
+  U.energia.sort((a,b)=>(a.ano-b.ano)||(a.mes-b.mes));
+  const _ay=new Date().getFullYear();
+  const t=$('tbl-energia'); const L=U.energia.map((r,i)=>({r,i})).filter(o=>o.r.ano===_ay);
+  $('cnt-energia').textContent='('+L.length+' em '+_ay+' · '+U.energia.length+' no total)';
+  if(!L.length){ t.innerHTML='<tr><td class="empty" colspan="8">Sem registros em '+_ay+'.</td></tr>'; return; }
+  t.innerHTML='<thead><tr><th>Ano</th><th>Mês</th><th>kWh</th><th>Livre</th><th>Cativo</th><th>Economia</th><th>%</th><th></th></tr></thead><tbody>'+
+    L.map(({r,i})=>'<tr><td>'+r.ano+'</td><td>'+MESN3[r.mes-1]+'</td><td>'+NUM(r.kwh)+'</td><td>'+BRL(r.livre)+'</td><td>'+BRL(r.cativo)+'</td><td>'+BRL(r.eco)+'</td><td>'+(r.pct!=null?Math.round(r.pct*100)+'%':'—')+'</td>'+
+      '<td><button class="edit" onclick="editEnergia('+i+')">✎</button><button class="del" onclick="delReg(U.energia,'+i+',renderEnergia)">✕</button></td></tr>').join('')+'</tbody>';
+}
+function editEnergia(i){const r=U.energia[i];$('en-ano').value=r.ano;$('en-mes').value=r.mes;$('en-kwh').value=r.kwh??'';$('en-livre').value=r.livre??'';$('en-cativo').value=r.cativo??'';calcEnergia();window.scrollTo({top:0,behavior:'smooth'});}
+
+/* =====================================================================
+   GÁS
+   ===================================================================== */
+function addGas(){
+  const ano=parseInt($('gs-ano').value,10), mes=parseInt($('gs-mes').value,10);
+  if(!ano||!mes){ alert('Informe Ano e Mês.'); return; }
+  const resp=exigeResp(); if(resp===null) return;
+  upsertMes(U.gas,{ano,mes,m3:num($('gs-m3').value),valor:num($('gs-valor').value),resp});
+  ['gs-m3','gs-valor'].forEach(i=>$(i).value='');
+  persistir(); renderGas(); setStatus('Gás: '+MESNOME[mes-1]+'/'+ano+' salvo.');
+}
+function renderGas(){
+  U.gas.sort((a,b)=>(a.ano-b.ano)||(a.mes-b.mes));
+  const _ay=new Date().getFullYear();
+  const t=$('tbl-gas'); const L=U.gas.map((r,i)=>({r,i})).filter(o=>o.r.ano===_ay);
+  $('cnt-gas').textContent='('+L.length+' em '+_ay+' · '+U.gas.length+' no total)';
+  if(!L.length){ t.innerHTML='<tr><td class="empty" colspan="6">Sem registros em '+_ay+'.</td></tr>'; return; }
+  t.innerHTML='<thead><tr><th>Ano</th><th>Mês</th><th>Volume m³</th><th>Valor</th><th>Consumo/dia m³</th><th></th></tr></thead><tbody>'+
+    L.map(({r,i})=>'<tr><td>'+r.ano+'</td><td>'+MESN3[r.mes-1]+'</td><td>'+NUM(r.m3)+'</td><td>'+BRL(r.valor)+'</td><td>'+(r.m3!=null?NUM(r.m3/30):'—')+'</td>'+
+      '<td><button class="edit" onclick="editGas('+i+')">✎</button><button class="del" onclick="delReg(U.gas,'+i+',renderGas)">✕</button></td></tr>').join('')+'</tbody>';
+}
+function editGas(i){const r=U.gas[i];$('gs-ano').value=r.ano;$('gs-mes').value=r.mes;$('gs-m3').value=r.m3??'';$('gs-valor').value=r.valor??'';window.scrollTo({top:0,behavior:'smooth'});}
+
+/* =====================================================================
+   ANÁLISES ETE (internas) — por data (append)
+   ===================================================================== */
+const LIM_ETE={ph:[6.0,10.0],temp:[null,40],zn:[null,5.0],ni:[null,2.0],so4:[null,1000],cu:[null,1.5]};
+function foraFaixa(v,lim){ if(v==null) return false; if(lim[0]!=null&&v<lim[0]) return true; if(lim[1]!=null&&v>lim[1]) return true; return false; }
+function cel(v,lim){ return foraFaixa(v,lim)?'<b style="color:var(--danger)">'+NUM(v)+'</b>':NUM(v); }
+let _v888=null;
+function cel2(v,lim){ if(v==null) return '<td>—</td>'; return (lim&&foraFaixa(v,lim))?'<td><b style="color:var(--danger)">'+NUM(v)+'</b></td>':'<td>'+NUM(v)+'</td>'; }
+function celClick(v,lim,tipo,i){ if(v==null) return '<td>—</td>'; if(lim&&foraFaixa(v,lim)) return '<td onclick="editarOcorrencia(&#39;'+tipo+'&#39;,'+i+')" style="cursor:pointer" title="Ver Fato/Causa/Ação"><b style="color:var(--danger)">'+NUM(v)+'</b></td>'; return '<td>'+NUM(v)+'</td>'; }
+function editarOcorrencia(tipo,idx){ const arr=tipo==='eta'?U.eta:U.ana_int; const r=arr[idx]; if(!r) return; _pendOc=function(oc){ r.fato=oc.fato; r.causa=oc.causa; r.acao=oc.acao; persistir(); (tipo==='eta'?renderEta:renderAnaInt)(); }; $('oc-avisos').innerHTML='Ocorrência registrada — edite se necessário.'; $('oc-fato').value=r.fato||''; $('oc-causa').value=r.causa||''; $('oc-acao').value=r.acao||''; $('modal-ocorrencia').style.display='flex'; }
+let _pendOc=null;
+function addAnaInt(){
+  const d=$('ai-d').value; if(!d){ alert('Informe a Data.'); return; }
+  const resp=exigeResp(); if(resp===null) return;
+  const reg={d,ph:num($('ai-ph').value),temp:num($('ai-temp').value),zn:num($('ai-zn').value),ni:num($('ai-ni').value),so4:num($('ai-so4').value),cu:num($('ai-cu').value),resp};
+  if([reg.ph,reg.temp,reg.zn,reg.ni,reg.so4,reg.cu].every(v=>v==null)){ alert('Informe ao menos um valor.'); return; }
+  const av=[];
+  if(foraFaixa(reg.ph,LIM_ETE.ph)) av.push('pH fora (6,0–10,0)');
+  if(foraFaixa(reg.temp,LIM_ETE.temp)) av.push('Temperatura acima de 40°C');
+  if(foraFaixa(reg.zn,LIM_ETE.zn)) av.push('Zinco acima de 5,0 ppm');
+  if(foraFaixa(reg.ni,LIM_ETE.ni)) av.push('Níquel acima de 2,0 ppm');
+  if(foraFaixa(reg.cu,LIM_ETE.cu)) av.push('Cobre acima de 1,5 ppm');
+  if(foraFaixa(reg.so4,LIM_ETE.so4)) av.push('Sulfato acima de 1000 ppm');
+  if(av.length){ abrirOcorrencia(av,function(oc){reg.fato=oc.fato;reg.causa=oc.causa;reg.acao=oc.acao;salvarAnaInt(reg);}); return; }
+  salvarAnaInt(reg);
+}
+function salvarAnaInt(reg){
+  U.ana_int.push(reg);
+  ['ai-ph','ai-temp','ai-zn','ai-ni','ai-cu','ai-so4'].forEach(i=>$(i).value='');
+  persistir(); renderAnaInt();
+  setStatus('Análise ETE '+dBR(reg.d)+' adicionada.'+((reg.fato||reg.causa||reg.acao)?' ⚠ com ocorrência':''));
+}
+function abrirOcorrencia(av, saveFn){
+  _pendOc=saveFn;
+  $('oc-avisos').innerHTML='Fora da faixa: '+av.join(' · ');
+  $('oc-fato').value=''; $('oc-causa').value=''; $('oc-acao').value='';
+  $('modal-ocorrencia').style.display='flex';
+}
+function confirmarOcorrencia(){
+  if(!_pendOc) return;
+  var oc={fato:$('oc-fato').value.trim(),causa:$('oc-causa').value.trim(),acao:$('oc-acao').value.trim()};
+  $('modal-ocorrencia').style.display='none';
+  var fn=_pendOc; _pendOc=null; fn(oc);
+}
+function cancelarOcorrencia(){ $('modal-ocorrencia').style.display='none'; _pendOc=null; }
+function renderAnaInt(){
+  U.ana_int.sort((a,b)=>a.d<b.d?-1:1);
+  $('cnt-anaint').textContent=contagem(U.ana_int,false);
+  const t=$('tbl-anaint'); const L=filtrarExib(U.ana_int,false);
+  if(!L.length){ t.innerHTML=vazioMsg(8); return; }
+  t.innerHTML='<thead><tr><th>Data</th><th>pH</th><th>Temp°C</th><th>Zinco</th><th>Níquel</th><th>Cobre</th><th>Sulfato</th><th></th></tr></thead><tbody>'+
+    L.map(({r,i})=>{ const occ=(r.fato||r.causa||r.acao); const wm=occ?' <span onclick="editarOcorrencia(&#39;ana&#39;,'+i+')" style="cursor:pointer" title="Ver Fato/Causa/Ação">⚠</span>':''; return '<tr><td>'+dBR(r.d)+wm+'</td>'+celClick(r.ph,LIM_ETE.ph,'ana',i)+celClick(r.temp,LIM_ETE.temp,'ana',i)+celClick(r.zn,LIM_ETE.zn,'ana',i)+celClick(r.ni,LIM_ETE.ni,'ana',i)+celClick(r.cu,LIM_ETE.cu,'ana',i)+celClick(r.so4,LIM_ETE.so4,'ana',i)+
+      '<td><button class="del" onclick="delReg(U.ana_int,'+i+',renderAnaInt)">✕</button></td></tr>'; }).join('')+'</tbody>';
+}
+
+/* =====================================================================
+   ANÁLISES EXTERNAS — por data (append)
+   ===================================================================== */
+function lerPdfExt(input){
+  const f=input.files[0]; if(!f) return; input.value='';
+  if(f.type!=='application/pdf'){ alert('Selecione um arquivo PDF.'); return; }
+  if(typeof pdfjsLib==='undefined'){ alert('Leitor de PDF não carregou (precisa de internet).'); return; }
+  const rd=new FileReader();
+  rd.onload=function(ev){
+    const buf=new Uint8Array(ev.target.result);
+    try{ const blob=new Blob([buf.slice()],{type:'application/pdf'}); const u=URL.createObjectURL(blob); window.open(u,'_blank'); setTimeout(function(){URL.revokeObjectURL(u);},60000); }catch(e){}
+    pdfjsLib.getDocument({data:buf}).promise.then(function(pdf){
+      const tks=[]; for(let i=1;i<=pdf.numPages;i++){ tks.push(pdf.getPage(i).then(function(pg){return pg.getTextContent();}).then(function(tc){return tc.items.map(function(it){return it.str;}).join(' ');})); }
+      return Promise.all(tks).then(function(parts){
+        const txt=parts.join(' ');
+        const md=txt.match(/Data da Amostragem:?\s*(\d{2})\/(\d{2})\/(\d{4})/) || txt.match(/(\d{2})\/(\d{2})\/(\d{4})/);
+        if($('ae-d')) $('ae-d').value = md ? (md[3]+'-'+md[2]+'-'+md[1]) : '';
+        const mn=txt.match(/N[\u00ba\u00b0o][ ]*([0-9][0-9A-Za-z.\/-]*\/20\d{2}[0-9A-Za-z.\-]*)/) || txt.match(/([0-9]{3,6}[-0-9]*\/20\d{2}[-.0-9A-Za-z]*)/);
+        if($('ae-rel')) $('ae-rel').value = mn ? mn[1] : '';
+        if(!mn){ alert('Não consegui identificar o Nº do relatório no PDF. Preencha manualmente antes de adicionar.'); }
+        function val(nome){ const m=txt.match(new RegExp(nome+"[ ]+(?:---|[0-9-]+)[ ]+(ND|<[ ]*[0-9.,]+|[0-9.,]+)","i")); if(!m) return null; const v=m[1].trim(); if(/^ND$/i.test(v)) return null; return num(v.replace('<','').trim()); }
+        _extVals={ph:val('pH'),temp:val('Temperatura'),cu:val('Cobre'),ni:val('N\u00edquel'),zn:val('Zinco'),so4:val('Sulfato')};
+        var _lm={ph:[6,10],temp:[null,40],zn:[null,5],ni:[null,2],cu:[null,1.5],so4:[null,1000]}, _f=false;
+        ['ph','temp','zn','ni','cu','so4'].forEach(function(k){ var v=_extVals[k]; if(v!=null){ var l=_lm[k]; if((l[0]!=null&&v<l[0])||(l[1]!=null&&v>l[1])) _f=true; } });
+        _extVals.parecerAuto=_f?'NÃO CONFORME':'CONFORME';
+        addAnaExt();
+      });
+    }).catch(function(e){ alert('Não consegui ler o PDF: '+(e&&e.message?e.message:e)); });
+  };
+  rd.readAsArrayBuffer(f);
+}
+let _extVals=null;
+function addAnaExt(){
+  const d=$('ae-d').value; if(!d){ alert('Informe a Data.'); return; }
+  const resp=exigeResp(); if(resp===null) return;
+  const reg={d,rel:$('ae-rel').value.trim(),parecer:$('ae-parecer').value.trim().toUpperCase(),resp};
+  if(_extVals){ const pa=_extVals.parecerAuto; delete _extVals.parecerAuto; Object.assign(reg,_extVals); if(pa) reg.parecer=pa; _extVals=null; }
+  if(reg.rel && U.ana_ext.some(e=>e.rel && e.rel===reg.rel)){ alert('Este relatório (Nº '+reg.rel+') já foi adicionado — não será duplicado.'); return; }
+  U.ana_ext.push(reg);
+  $('ae-rel').value='';
+  persistir(); renderAnaExt(); setStatus('Parecer externo '+dBR(d)+' adicionado.');
+}
+function renderAnaExt(){
+  U.ana_ext.sort((a,b)=>a.d<b.d?-1:1);
+  const _cf=U.ana_ext.filter(e=>e.parecer==='CONFORME').length, _nc=U.ana_ext.length-_cf;
+  dgraf('ch-conf',{type:'doughnut',data:{labels:['Conforme ('+_cf+')','Não conforme ('+_nc+')'],datasets:[{data:[_cf,_nc],backgroundColor:['#16a34a','#dc2626']}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}}}});
+  const sel=$('ae-ano'); const cur=String(new Date().getFullYear()); let ano=cur;
+  if(sel){ const anos=[...new Set(U.ana_ext.map(e=>e.d&&e.d.slice(0,4)).filter(Boolean))]; if(anos.indexOf(cur)<0) anos.push(cur); anos.sort(); const atual=sel.value||cur; sel.innerHTML=anos.map(a=>'<option value="'+a+'">'+a+'</option>').join(''); sel.value=(anos.indexOf(atual)>=0?atual:cur); ano=sel.value; }
+  const L=U.ana_ext.map((r,i)=>({r,i})).filter(o=>o.r.d&&o.r.d.slice(0,4)===ano);
+  $('cnt-anaext').textContent='('+L.length+' em '+ano+' · '+U.ana_ext.length+' no total)';
+  const t=$('tbl-anaext');
+  if(!L.length){ t.innerHTML='<tr><td class="empty" colspan="4">Sem pareceres em '+ano+'.</td></tr>'; return; }
+  t.innerHTML='<thead><tr><th>Data</th><th>Nº Relatório</th><th>Status</th><th></th></tr></thead><tbody>'+
+    L.map(({r,i})=>'<tr><td>'+dBR(r.d)+'</td><td>'+(r.rel||'—')+'</td><td><span class="badge '+(r.parecer==='CONFORME'?'ok':'nok')+'">'+r.parecer+'</span></td>'+
+      '<td><button class="del" onclick="delReg(U.ana_ext,'+i+',renderAnaExt)">✕</button></td></tr>').join('')+'</tbody>';
+}
+function limparAnoExt(){ const sel=$('ae-ano'); const ano=sel?sel.value:''; if(!ano) return; if(!confirm('Apagar todos os pareceres externos de '+ano+'?')) return; U.ana_ext=U.ana_ext.filter(e=>!(e.d&&e.d.slice(0,4)===ano)); persistir(); renderAnaExt(); }
+function mostrarPort(p){
+  const a=$('ext-19a'), b=$('ext-888'); if(a) a.style.display=(p==='19A')?'':'none'; if(b) b.style.display=(p==='888')?'':'none';
+  const b1=$('pbtn-19a'), b2=$('pbtn-888'); if(b1) b1.className='btn '+(p==='19A'?'blue':'gray'); if(b2) b2.className='btn '+(p==='888'?'blue':'gray');
+  if(p==='888') renderAna888(); else renderAnaExt();
+}
+function addAna888(){
+  const d=$('a8-d').value; if(!d){ alert('Informe a Data.'); return; }
+  const resp=exigeResp(); if(resp===null) return;
+  const reg={d,rel:$('a8-rel').value.trim(),ponto:($('a8-ponto')?$('a8-ponto').value.trim():''),parecer:$('a8-parecer').value.trim().toUpperCase(),resp};
+  if(_v888){ const pa=_v888.parecerAuto; delete _v888.parecerAuto; Object.assign(reg,_v888); if(pa) reg.parecer=pa; _v888=null; }
+  if(reg.rel && U.ana_888.some(e=>e.rel && e.rel===reg.rel)){ alert('Este relatório 888 (Nº '+reg.rel+') já foi adicionado — não será duplicado.'); return; }
+  U.ana_888.push(reg); $('a8-rel').value=''; if($('a8-ponto'))$('a8-ponto').value='';
+  persistir(); renderAna888(); setStatus('Análise 888 · '+(reg.ponto||'')+' · '+dBR(d)+' adicionada.');
+}
+function renderAna888(){
+  U.ana_888.sort((a,b)=>a.d<b.d?-1:1);
+  const _cf=U.ana_888.filter(e=>e.parecer==='CONFORME').length, _nc=U.ana_888.length-_cf;
+  dgraf('ch-conf8',{type:'doughnut',data:{labels:['Conforme ('+_cf+')','Não conforme ('+_nc+')'],datasets:[{data:[_cf,_nc],backgroundColor:['#16a34a','#dc2626']}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}}}});
+  const sel=$('a8-ano'); const cur=String(new Date().getFullYear()); let ano=cur;
+  if(sel){ const anos=[...new Set(U.ana_888.map(e=>e.d&&e.d.slice(0,4)).filter(Boolean))]; if(anos.indexOf(cur)<0) anos.push(cur); anos.sort(); const atual=sel.value||cur; sel.innerHTML=anos.map(a=>'<option value="'+a+'">'+a+'</option>').join(''); sel.value=(anos.indexOf(atual)>=0?atual:cur); ano=sel.value; }
+  const L=U.ana_888.map((r,i)=>({r,i})).filter(o=>o.r.d&&o.r.d.slice(0,4)===ano);
+  if($('cnt-a8')) $('cnt-a8').textContent='('+L.length+' em '+ano+' · '+U.ana_888.length+' no total)';
+  const t=$('tbl-a8'); if(!t) return;
+  if(!L.length){ t.innerHTML='<tr><td class="empty" colspan="9">Sem análises 888 em '+ano+'.</td></tr>'; return; }
+  const LM={cloro:[0.2,5],ph:[6,9],turbidez:[null,5],cor:[null,15],fluoreto:[null,1.5]};
+  t.innerHTML='<thead><tr><th>Data</th><th>Ponto</th><th>Cloro</th><th>pH</th><th>Turbidez</th><th>Cor</th><th>Fluoreto</th><th>Status</th><th></th></tr></thead><tbody>'+
+    L.map(({r,i})=>'<tr><td>'+dBR(r.d)+'</td><td>'+(r.ponto||'—')+'</td>'+cel2(r.cloro,LM.cloro)+cel2(r.ph,LM.ph)+cel2(r.turbidez,LM.turbidez)+cel2(r.cor,LM.cor)+cel2(r.fluoreto,LM.fluoreto)+'<td><span class="badge '+(r.parecer==='CONFORME'?'ok':'nok')+'">'+r.parecer+'</span></td>'+
+      '<td><button class="del" onclick="delReg(U.ana_888,'+i+',renderAna888)">✕</button></td></tr>').join('')+'</tbody>';
+}
+function limparAno888(){ const sel=$('a8-ano'); const ano=sel?sel.value:''; if(!ano) return; if(!confirm('Apagar todas as análises 888 de '+ano+'?')) return; U.ana_888=U.ana_888.filter(e=>!(e.d&&e.d.slice(0,4)===ano)); persistir(); renderAna888(); }
+function lerPdf888(input){
+  const f=input.files[0]; if(!f) return; input.value='';
+  if(f.type!=='application/pdf'){ alert('Selecione um arquivo PDF.'); return; }
+  if(typeof pdfjsLib==='undefined'){ alert('Leitor de PDF não carregou (precisa de internet).'); return; }
+  const rd=new FileReader();
+  rd.onload=function(ev){
+    const buf=new Uint8Array(ev.target.result);
+    try{ const blob=new Blob([buf.slice()],{type:'application/pdf'}); const u=URL.createObjectURL(blob); window.open(u,'_blank'); setTimeout(function(){URL.revokeObjectURL(u);},60000); }catch(e){}
+    pdfjsLib.getDocument({data:buf}).promise.then(function(pdf){
+      const tks=[]; for(let i=1;i<=pdf.numPages;i++){ tks.push(pdf.getPage(i).then(function(pg){return pg.getTextContent();}).then(function(tc){return tc.items.map(function(it){return it.str;}).join(' ');})); }
+      return Promise.all(tks).then(function(parts){
+        const txt=parts.join(' ');
+        const md=txt.match(/Data Coleta:?\s*(\d{2})\/(\d{2})\/(\d{4})/) || txt.match(/(\d{2})\/(\d{2})\/(\d{4})/);
+        if($('a8-d')) $('a8-d').value = md ? (md[3]+'-'+md[2]+'-'+md[1]) : '';
+        const mn=txt.match(/Relat[\u00f3o]rio de Ensaio[ ]+([0-9][0-9A-Za-z.\/-]*\/20\d{2}[0-9A-Za-z.\-]*)/) || txt.match(/([0-9]{3,6}[-0-9]*\/20\d{2}[-.0-9A-Za-z]*)/);
+        if($('a8-rel')) $('a8-rel').value = mn ? mn[1] : '';
+        const mp=txt.match(/Ponto de Coleta:?[ ]*(.+?)[ ]+Amostrado/); const ponto=mp?mp[1].trim():'';
+        if($('a8-ponto')) $('a8-ponto').value = ponto;
+        function v8(nome){ const m=txt.match(new RegExp('(?:^| )'+nome+'[ ]+(ND|<[ ]*[0-9.,]+|[0-9.,]+)','i')); if(!m) return null; const v=m[1].trim(); if(/^ND$/i.test(v)) return null; return num(v.replace('<','').trim()); }
+        function pa8(nome){ const m=txt.match(new RegExp(nome+'[^A-Za-z]{0,25}(Aus[eê]ncia|Presen[çc]a)','i')); return m?(/pres/i.test(m[1])?'Presença':'Ausência'):''; }
+        _v888={ponto:ponto,cloro:v8('Cloro Residual Livre'),ph:v8('pH'),temp:v8('Temperatura'),cor:v8('Cor Aparente'),fluoreto:v8('Fluoreto'),turbidez:v8('Turbidez'),coli:pa8('Coliformes Totais'),ecoli:pa8('Escherichia')};
+        var pa=/N[\u00c3A]O\s+ATENDE/i.test(txt)?'NÃO CONFORME':(/ATENDE/i.test(txt)?'CONFORME':null);
+        if(!pa){ var _l={cloro:[0.2,5],ph:[6,9],turbidez:[null,5],cor:[null,15],fluoreto:[null,1.5]},_f=false; ['cloro','ph','turbidez','cor','fluoreto'].forEach(function(k){var vv=_v888[k];if(vv!=null){var l=_l[k];if((l[0]!=null&&vv<l[0])||(l[1]!=null&&vv>l[1]))_f=true;}}); if(_v888.coli==='Presença'||_v888.ecoli==='Presença')_f=true; pa=_f?'NÃO CONFORME':'CONFORME'; }
+        _v888.parecerAuto=pa;
+        if(!mn){ alert('Não identifiquei o Nº — confira/preencha antes de adicionar.'); }
+        addAna888();
+      });
+    }).catch(function(e){ alert('Não consegui ler o PDF: '+(e&&e.message?e.message:e)); });
+  };
+  rd.readAsArrayBuffer(f);
+}
+
+/* =====================================================================
+   ETA — por data (append)
+   ===================================================================== */
+const ETA_PONTOS={
+  "Poço Profundo":{cloro:[0.2,5.0],ph:[6.5,8.5],temp:[null,40]},
+  "Caixa d'água 170m³":{cloro:[0.2,5.0],ph:[6.5,8.5],temp:[null,40]},
+  "Água Abrandada":{ph:[6.2,8.0]},
+  "Água Abrandada BIO":{ph:[6.2,8.0]},
+  "Água Abrandada Caldeira":{ph:[10.5,11.5]}
+};
+const ETA_ORDER=["Poço Profundo","Caixa d'água 170m³","Água Abrandada","Água Abrandada BIO","Água Abrandada Caldeira"];
+let _foraQueue=null;
+function etaUsaCloroTemp(p){ return p==="Poço Profundo" || p.indexOf("170")>=0; }
+function faixaTextoEta(p){ const c=ETA_PONTOS[p]; if(!c) return ''; const a=[]; if(c.cloro)a.push('Cloro '+c.cloro[0]+'–'+c.cloro[1]+' ppm'); if(c.ph)a.push('pH '+c.ph[0]+'–'+c.ph[1]); if(c.temp)a.push('Temp máx '+c.temp[1]+'°C'); return 'Faixa de referência: '+a.join(' · '); }
+function etaCampos(){ const p=$('et-ponto').value; const u=etaUsaCloroTemp(p); const fc=$('et-f-cloro'),ft=$('et-f-temp'); if(fc)fc.style.display=u?'':'none'; if(ft)ft.style.display=u?'':'none'; const fx=$('et-faixa'); if(fx)fx.textContent=faixaTextoEta(p); }
+function addEta(){
+  const d=$('et-d').value; if(!d){ alert('Informe a Data.'); return; }
+  const resp=exigeResp(); if(resp===null) return;
+  let algum=false; const fora=[];
+  ETA_ORDER.forEach((ponto,idx)=>{
+    const c=ETA_PONTOS[ponto]||{};
+    const clEl=$('etr-cloro-'+idx), phEl=$('etr-ph-'+idx), tpEl=$('etr-temp-'+idx);
+    const cloro=(c.cloro&&clEl)?num(clEl.value):null;
+    const ph=phEl?num(phEl.value):null;
+    const temp=(c.temp&&tpEl)?num(tpEl.value):null;
+    if(cloro==null&&ph==null&&temp==null) return;
+    algum=true;
+    const av=[];
+    if(c.cloro&&cloro!=null&&(cloro<c.cloro[0]||cloro>c.cloro[1])) av.push('Cloro fora ('+c.cloro[0]+'–'+c.cloro[1]+' ppm)');
+    if(c.ph&&ph!=null&&(ph<c.ph[0]||ph>c.ph[1])) av.push('pH fora ('+c.ph[0]+'–'+c.ph[1]+')');
+    if(c.temp&&temp!=null&&c.temp[1]!=null&&temp>c.temp[1]) av.push('Temperatura acima de '+c.temp[1]+'°C');
+    const reg={d,ponto,cloro,ph,temp,resp};
+    const k=U.eta.findIndex(r=>r.d===d&&r.ponto===ponto);
+    if(k>=0) U.eta[k]=reg; else U.eta.push(reg);
+    if(av.length) fora.push({reg,av,ponto});
+  });
+  if(!algum){ alert('Informe ao menos um valor em algum ponto.'); return; }
+  ETA_ORDER.forEach((p,idx)=>{ ['cloro','ph','temp'].forEach(fl=>{const el=$('etr-'+fl+'-'+idx); if(el) el.value='';}); });
+  persistir(); renderEta();
+  setStatus('Medições ETA de '+dBR(d)+' salvas.'+(fora.length?(' ⚠ '+fora.length+' fora da faixa'):''));
+  if(fora.length){ _foraQueue=fora.slice(); proximaOcorrencia(); }
+}
+function proximaOcorrencia(){
+  if(!_foraQueue||!_foraQueue.length){ _foraQueue=null; return; }
+  const it=_foraQueue.shift();
+  abrirOcorrencia(it.av.map(a=>it.ponto+' — '+a), function(oc){ it.reg.fato=oc.fato; it.reg.causa=oc.causa; it.reg.acao=oc.acao; persistir(); renderEta(); proximaOcorrencia(); });
+}
+function salvarEta(reg){
+  const k=U.eta.findIndex(r=>r.d===reg.d&&r.ponto===reg.ponto);
+  if(k>=0) U.eta[k]=reg; else U.eta.push(reg);
+  ['et-cloro','et-ph','et-temp'].forEach(i=>$(i).value='');
+  persistir(); renderEta();
+  setStatus('ETA · '+reg.ponto+' · '+dBR(reg.d)+' salvo.'+((reg.fato||reg.causa||reg.acao)?' ⚠ com ocorrência':''));
+}
+function renderEta(){
+  U.eta.sort((a,b)=>a.d<b.d?-1:(a.d>b.d?1:String(a.ponto||'').localeCompare(String(b.ponto||''))));
+  $('cnt-eta').textContent=contagem(U.eta,false);
+  const t=$('tbl-eta'); const L=filtrarExib(U.eta,false);
+  if(!L.length){ t.innerHTML=vazioMsg(6); return; }
+  t.innerHTML='<thead><tr><th>Data</th><th>Ponto</th><th>Cloro (ppm)</th><th>pH</th><th>Temp°C</th><th></th></tr></thead><tbody>'+
+    L.map(({r,i})=>{ const c=ETA_PONTOS[r.ponto]||{}; const occ=(r.fato||r.causa||r.acao); const wm=occ?' <span onclick="editarOcorrencia(&#39;eta&#39;,'+i+')" style="cursor:pointer" title="Ver Fato/Causa/Ação">⚠</span>':'';
+      return '<tr><td>'+dBR(r.d)+wm+'</td><td>'+(r.ponto||'—')+'</td>'+celClick(r.cloro,c.cloro,'eta',i)+celClick(r.ph,c.ph,'eta',i)+celClick(r.temp,c.temp,'eta',i)+
+      '<td><button class="del" onclick="delReg(U.eta,'+i+',renderEta)">✕</button></td></tr>'; }).join('')+'</tbody>';
+}
+
+/* =====================================================================
+   PRODUTOS ETE — por data (append)
+   ===================================================================== */
+function addProd(){
+  const d=$('pr-d').value; if(!d){ alert('Informe a Data.'); return; }
+  const p=$('pr-p').value.trim(); if(!p){ alert('Informe o Produto.'); return; }
+  const resp=exigeResp(); if(resp===null) return;
+  U.prod.push({d,p,kg:num($('pr-kg').value),val:num($('pr-val').value),resp});
+  ['pr-p','pr-kg','pr-val'].forEach(i=>$(i).value='');
+  persistir(); renderProd(); setStatus('Consumo de "'+p+'" ('+dBR(d)+') adicionado.');
+}
+function renderProd(){
+  U.prod.sort((a,b)=>a.d<b.d?-1:1);
+  $('cnt-prod').textContent=contagem(U.prod,false);
+  atualizarDatalists();
+  const t=$('tbl-prod'); const L=filtrarExib(U.prod,false);
+  if(!L.length){ t.innerHTML=vazioMsg(5); return; }
+  t.innerHTML='<thead><tr><th>Data</th><th>Produto</th><th>Consumo</th><th>Valor</th><th></th></tr></thead><tbody>'+
+    L.map(({r,i})=>'<tr><td>'+dBR(r.d)+'</td><td>'+r.p+'</td><td>'+NUM(r.kg)+'</td><td>'+BRL(r.val)+'</td>'+
+      '<td><button class="del" onclick="delReg(U.prod,'+i+',renderProd)">✕</button></td></tr>').join('')+'</tbody>';
+}
+
+/* ---------- helpers comuns ---------- */
+function upsertMes(arr,reg){ const i=arr.findIndex(r=>r.ano===reg.ano&&r.mes===reg.mes); if(i>=0) arr[i]=reg; else arr.push(reg); }
+function delReg(arr,i,render){ if(confirm('Remover este registro?')){ arr.splice(i,1); persistir(); render(); } }
+function persistir(){ salvar(); }
+function renderTudo(){ renderAgua();renderAguaDia();renderEnergia();renderGas();renderAnaInt();renderAnaExt();renderAna888();renderEta();renderProd();renderRateio('agua');renderRateio('energia');renderRateio('gas'); }
+
+/* =====================================================================
+   CARREGAR DADOS ATUAIS (.html do dashboard  ou  .xlsx da base)
+   ===================================================================== */
+function carregarAtuais(input){
+  const f=input.files[0]; if(!f) return; input.value='';
+  const nome=f.name.toLowerCase();
+  if(nome.endsWith('.html')||nome.endsWith('.htm')){
+    const r=new FileReader();
+    r.onload=e=>{ try{ importarDashboardHTML(e.target.result); }catch(err){ alert('Erro ao ler o dashboard: '+err.message); } };
+    r.readAsText(f,'utf-8');
+  } else {
+    const r=new FileReader();
+    r.onload=e=>{ try{ importarXlsx(new Uint8Array(e.target.result)); }catch(err){ alert('Erro ao ler a planilha: '+err.message); } };
+    r.readAsArrayBuffer(f);
+  }
+}
+function _convEta(arr){ const out=[]; (arr||[]).forEach(r=>{ if(r.ponto){out.push(r);return;} const base={d:r.d,resp:r.resp||'',cloro:null,temp:null};
+  if(r.ph_poco!=null) out.push(Object.assign({},base,{ponto:'Poço Profundo',ph:r.ph_poco}));
+  if(r.cx170!=null) out.push(Object.assign({},base,{ponto:"Caixa d'água 170m³",ph:r.cx170}));
+  if(r.ph_abr!=null) out.push(Object.assign({},base,{ponto:'Água Abrandada',ph:r.ph_abr}));
+  if(r.ph_soda!=null) out.push(Object.assign({},base,{ponto:'Água Abrandada Caldeira',ph:r.ph_soda}));
+}); return out; }
+function importarDashboardHTML(txt){
+  const m=txt.match(/const U\s*=\s*(\{[\s\S]*?\});\s*\n/);
+  if(!m){ alert('Não encontrei os dados (const U) neste HTML.'); return; }
+  let obj; try{ obj=JSON.parse(m[1]); }catch(e){ alert('Dados do dashboard em formato inesperado: '+e.message); return; }
+  U={agua:obj.agua||[],agua_diario:U.agua_diario||[],energia:obj.energia||[],gas:obj.gas||[],ana_int:(obj.ana_int||[]).map(r=>r.zn!=null||r.ni!=null||r.cu!=null||r.temp!=null||r.so4!=null?r:({d:r.d,ph:r.ph,temp:null,zn:r.zinco,ni:r.niquel,cu:r.cobre,so4:null,resp:r.resp||''})),ana_ext:obj.ana_ext||[],ana_888:U.ana_888||[],eta:_convEta(obj.eta||[]),prod:obj.prod||[]};
+  persistir(); renderTudo();
+  setStatus('Dados carregados do dashboard: '+U.agua.length+' meses água, '+U.energia.length+' energia, '+U.gas.length+' gás, '+U.ana_int.length+' anál. internas, '+U.ana_ext.length+' externas, '+U.eta.length+' ETA, '+U.prod.length+' produtos.');
+}
+function importarXlsx(bytes){
+  const wb=XLSX.read(bytes,{type:'array'});
+  const g=(r,...ks)=>{for(const k of ks){for(const kk in r){if(kk&&kk.toUpperCase().startsWith(k.toUpperCase())&&r[kk]!=null&&r[kk]!=='')return r[kk];}}return null;};
+  const xNum=v=>{ if(typeof v==='number')return Math.round(v*1000)/1000; if(v==null)return null; const n=parseFloat(String(v).replace(/\./g,'').replace(',','.')); return isNaN(n)?null:Math.round(n*1000)/1000; };
+  const xData=v=>{ if(v instanceof Date)return v.toISOString().slice(0,10); if(typeof v==='number')return new Date(Date.UTC(1899,11,30)+Math.round(v)*86400000).toISOString().slice(0,10); const s=String(v).trim(),m=s.match(/(\d{2})\/(\d{2})\/(\d{4})/); return m?m[3]+'-'+m[2]+'-'+m[1]:''; };
+  const xMes=v=>MESNUM[String(v||'').trim().toUpperCase()]||null;
+  const ler=n=>{ const ws=wb.Sheets[n]; return ws?XLSX.utils.sheet_to_json(ws,{range:2,defval:null}):null; };
+  let ab;
+  ab=ler('AGUA'); if(ab) U.agua=ab.map(r=>({ano:xNum(g(r,'Ano')),mes:xMes(g(r,'Mês','Mes')),saae_m3:xNum(g(r,'SAAE Volume')),saae_poco:xNum(g(r,'SAAE Valor')),saae_tarifa:xNum(g(r,'SAAE Tarifa')),po_m3:xNum(g(r,'Point One Volume')),po_val:xNum(g(r,'Point One Valor'))})).filter(r=>r.ano&&r.mes);
+  ab=ler('ENERGIA'); if(ab) U.energia=ab.map(r=>{const livre=xNum(g(r,'Custo Livre')),cativo=xNum(g(r,'Custo Cativo'));let eco=xNum(g(r,'Economia (R$')),pct=xNum(g(r,'Economia (%'));if(eco==null&&livre!=null&&cativo!=null)eco=Math.round((cativo-livre)*100)/100;if(pct==null&&eco!=null&&cativo)pct=Math.round(eco/cativo*1000)/1000;return{ano:xNum(g(r,'Ano')),mes:xMes(g(r,'Mês','Mes')),kwh:xNum(g(r,'Consumo')),livre,cativo,eco,pct};}).filter(r=>r.ano&&r.mes);
+  ab=ler('GAS'); if(ab) U.gas=ab.map(r=>({ano:xNum(g(r,'Ano')),mes:xMes(g(r,'Mês','Mes')),m3:xNum(g(r,'Volume')),valor:xNum(g(r,'Valor'))})).filter(r=>r.ano&&r.mes);
+  ab=ler('ANALISES ETE'); if(ab) U.ana_int=ab.map(r=>({d:xData(g(r,'Data')),ph:xNum(g(r,'pH')),temp:xNum(g(r,'Temp')),zn:xNum(g(r,'Zn','Zinco')),ni:xNum(g(r,'Ni','Níquel','Niquel')),cu:xNum(g(r,'Cu','Cobre')),so4:xNum(g(r,'SO4','SO₄','Sulfato')),fato:String(g(r,'Fato')||''),causa:String(g(r,'Causa')||''),acao:String(g(r,'Ação','Acao')||'')})).filter(r=>r.d);
+  ab=ler('ANALISES EXTERNAS'); if(ab) U.ana_ext=ab.map(r=>({d:xData(g(r,'Data')),rel:String(g(r,'Nº Relat','N Relat','Relat')||''),parecer:String(g(r,'Parecer')||'').trim().toUpperCase(),ph:xNum(g(r,'pH')),temp:xNum(g(r,'Temp')),zn:xNum(g(r,'Zinco','Zn')),ni:xNum(g(r,'Níquel','Niquel','Ni')),cu:xNum(g(r,'Cobre','Cu')),so4:xNum(g(r,'Sulfato','SO4'))})).filter(r=>r.d&&r.parecer);
+  ab=ler('ANALISES 888'); if(ab) U.ana_888=ab.map(r=>({d:xData(g(r,'Data')),rel:String(g(r,'Nº Relat','N Relat','Relat')||''),ponto:String(g(r,'Ponto')||''),cloro:xNum(g(r,'Cloro')),ph:xNum(g(r,'pH')),temp:xNum(g(r,'Temp')),cor:xNum(g(r,'Cor')),fluoreto:xNum(g(r,'Fluoreto')),turbidez:xNum(g(r,'Turbidez')),coli:String(g(r,'Coliformes')||''),ecoli:String(g(r,'E. coli','E.coli','Escherichia')||''),parecer:String(g(r,'Parecer')||'').trim().toUpperCase()})).filter(r=>r.d);
+  ab=ler('ETA'); if(ab) U.eta=ab.map(r=>({d:xData(g(r,'Data')),ponto:String(g(r,'Ponto')||''),cloro:xNum(g(r,'Cloro')),ph:xNum(g(r,'pH')),temp:xNum(g(r,'Temp')),fato:String(g(r,'Fato')||''),causa:String(g(r,'Causa')||''),acao:String(g(r,'Ação','Acao')||'')})).filter(r=>r.d);
+  ab=ler('PRODUTOS ETE'); if(ab) U.prod=ab.map(r=>({d:xData(g(r,'Data')),p:String(g(r,'Produto')||'').trim(),kg:xNum(g(r,'Consumo')),val:xNum(g(r,'Valor'))})).filter(r=>r.d&&r.p);
+  ab=ler('HIDROMETROS'); if(ab) U.agua_diario=ab.map(r=>({d:xData(g(r,'Data')),poco:xNum(g(r,'Leitura Poço','Leitura Poco')),cx170:xNum(g(r,'Leitura Caixa 170','Leitura Cx','Caixa 170')),reuso:xNum(g(r,'Leitura Reuso','Reuso')),ete:xNum(g(r,'Leitura Volume ETE','Volume ETE','Leitura ETE')),resp:String(g(r,'Responsável','Responsavel')||'')})).filter(r=>r.d);
+  persistir(); renderTudo();
+  setStatus('Base .xlsx importada.');
+}
+
+/* =====================================================================
+   EXPORTAR PLANILHA .xlsx  (formato exato do dashboard: cabeçalho na linha 3)
+   ===================================================================== */
+function aba(wb,nome,titulo,headers,linhas){
+  const rows=[[titulo],[],headers,...linhas];
+  const ws=XLSX.utils.aoa_to_sheet(rows);
+  XLSX.utils.book_append_sheet(wb,ws,nome);
+}
+function construirWb(){
+  const wb=XLSX.utils.book_new();
+  aba(wb,'AGUA','Base Utilidades Agrivalle — Água',
+    ['Ano','Mês','SAAE Volume (m³)','SAAE Valor (R$)','SAAE Tarifa (R$)','Point One Volume (m³)','Point One Valor (R$)','Responsável'],
+    [...U.agua].sort((a,b)=>(a.ano-b.ano)||(a.mes-b.mes)).map(r=>[r.ano,MESNOME[r.mes-1],r.saae_m3,r.saae_poco,r.saae_tarifa,r.po_m3,r.po_val,r.resp||'']));
+  aba(wb,'ENERGIA','Base Utilidades Agrivalle — Energia',
+    ['Ano','Mês','Consumo (kWh)','Custo Livre (R$)','Custo Cativo (R$)','Economia (R$)','Economia (%)','Responsável'],
+    [...U.energia].sort((a,b)=>(a.ano-b.ano)||(a.mes-b.mes)).map(r=>[r.ano,MESNOME[r.mes-1],r.kwh,r.livre,r.cativo,r.eco,r.pct,r.resp||'']));
+  aba(wb,'GAS','Base Utilidades Agrivalle — Gás Natural',
+    ['Ano','Mês','Volume (m³)','Valor (R$)','Responsável'],
+    [...U.gas].sort((a,b)=>(a.ano-b.ano)||(a.mes-b.mes)).map(r=>[r.ano,MESNOME[r.mes-1],r.m3,r.valor,r.resp||'']));
+  aba(wb,'ANALISES ETE','Base Utilidades Agrivalle — Análises ETE (PORT 19A)',
+    ['Data','pH','Temperatura (°C)','Zinco (ppm)','Níquel (ppm)','Cobre (ppm)','Sulfato (ppm)','Fato','Causa','Ação','Responsável'],
+    [...U.ana_int].sort((a,b)=>a.d<b.d?-1:1).map(r=>[dBR(r.d),r.ph,r.temp,r.zn,r.ni,r.cu,r.so4,r.fato||'',r.causa||'',r.acao||'',r.resp||'']));
+  aba(wb,'ANALISES EXTERNAS','Base Utilidades Agrivalle — Análises Externas (Aqualab)',
+    ['Data','Nº Relatório','Parecer','pH','Temperatura (°C)','Zinco (mg/L)','Níquel (mg/L)','Cobre (mg/L)','Sulfato (mg/L)','Responsável'],
+    [...U.ana_ext].sort((a,b)=>a.d<b.d?-1:1).map(r=>[dBR(r.d),r.rel,r.parecer,r.ph,r.temp,r.zn,r.ni,r.cu,r.so4,r.resp||'']));
+  aba(wb,'ANALISES 888','Base Utilidades Agrivalle — Análises Portaria 888',
+    ['Data','Nº Relatório','Ponto','Cloro Livre (mg/L)','pH','Temperatura (°C)','Cor (mg Pt-Co/L)','Fluoreto (mg/L)','Turbidez (NTU)','Coliformes','E. coli','Parecer','Responsável'],
+    [...(U.ana_888||[])].sort((a,b)=>a.d<b.d?-1:1).map(r=>[dBR(r.d),r.rel,r.ponto||'',r.cloro,r.ph,r.temp,r.cor,r.fluoreto,r.turbidez,r.coli||'',r.ecoli||'',r.parecer,r.resp||'']));
+  aba(wb,'ETA','Base Utilidades Agrivalle — Análises ETA (por ponto)',
+    ['Data','Ponto','Cloro Livre (ppm)','pH','Temperatura (°C)','Fato','Causa','Ação','Responsável'],
+    [...U.eta].sort((a,b)=>a.d<b.d?-1:1).map(r=>[dBR(r.d),r.ponto||'',r.cloro,r.ph,r.temp,r.fato||'',r.causa||'',r.acao||'',r.resp||'']));
+  aba(wb,'PRODUTOS ETE','Base Utilidades Agrivalle — Produtos ETE',
+    ['Data','Produto','Consumo (kg/L)','Valor (R$)','Responsável'],
+    [...U.prod].sort((a,b)=>a.d<b.d?-1:1).map(r=>[dBR(r.d),r.p,r.kg,r.val,r.resp||'']));
+  aba(wb,'HIDROMETROS','Base Utilidades Agrivalle — Hidrômetros (leituras diárias)',
+    ['Data','Leitura Poço (m³)','Leitura Caixa 170 (m³)','Leitura Reuso (m³)','Leitura Volume ETE (m³)','Responsável'],
+    [...(U.agua_diario||[])].sort((a,b)=>a.d<b.d?-1:1).map(r=>[dBR(r.d),r.poco,r.cx170,r.reuso,r.ete,r.resp||'']));
+  function _rtSheet(util,arr,tf){ var rows=[]; [...arr].sort(function(a,b){return (a.ano-b.ano)||(a.mes-b.mes);}).forEach(function(r){ var total=tf(r); (CFG.rateio||[]).forEach(function(x){ rows.push([r.ano,MESNOME[r.mes-1],x.cc,x.celula,x[util],Math.round(total*(x[util]||0)/100*100)/100]); }); }); return rows; }
+  var _RH=['Ano','Mês','Centro de Custo','Célula','%','Valor (R$)'];
+  aba(wb,'RATEIO AGUA','Rateio de Água por Centro de Custo',_RH,_rtSheet('agua',U.agua,function(r){return (r.saae_poco||0)+(r.po_val||0);}));
+  aba(wb,'RATEIO ENERGIA','Rateio de Energia por Centro de Custo',_RH,_rtSheet('energia',U.energia,function(r){return (r.livre||0);}));
+  aba(wb,'RATEIO GAS','Rateio de Gás por Centro de Custo',_RH,_rtSheet('gas',U.gas,function(r){return (r.valor||0);}));
+  return wb;
+}
+function exportarXlsx(){
+  if(!temDados()){ alert('Não há dados para exportar.'); return; }
+  XLSX.writeFile(construirWb(),'Base_Utilidades_Agrivalle.xlsx');
+  setStatus('Planilha exportada: Base_Utilidades_Agrivalle.xlsx');
+}
+function temDados(){ return U.agua.length||U.energia.length||U.gas.length||U.ana_int.length||U.ana_ext.length||U.eta.length||U.prod.length; }
+
+/* =====================================================================
+   BACKUP / RESTAURAR / LIMPAR
+   ===================================================================== */
+function baixarBackup(){ baixarTexto(JSON.stringify(U,null,2),'backup_utilidades.json','application/json'); }
+function restaurarBackup(input){ const f=input.files[0]; if(!f)return; input.value=''; const r=new FileReader(); r.onload=e=>{try{const o=JSON.parse(e.target.result);U=Object.assign({agua:[],agua_diario:[],energia:[],gas:[],ana_int:[],ana_ext:[],ana_888:[],eta:[],prod:[]},o);persistir();renderTudo();setStatus('Backup restaurado.');}catch(err){alert('JSON inválido: '+err.message);}}; r.readAsText(f); }
+function limparTudo(){ if(confirm('Apagar TODOS os dados lançados neste app? (não afeta arquivos salvos)')){ U={agua:[],agua_diario:[],energia:[],gas:[],ana_int:[],ana_ext:[],ana_888:[],eta:[],prod:[]}; persistir(); renderTudo(); setStatus('Dados apagados.'); } }
+function baixarTexto(txt,nome,tipo){ const blob=new Blob([txt],{type:tipo}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=nome; document.body.appendChild(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},1500); }
+
+/* =====================================================================
+   E-MAIL (compartilhar nativo + fallback)
+   ===================================================================== */
+async function enviarEmail(){
+  if(!temDados()){ alert('Não há dados para enviar.'); return; }
+  const to=($('em-to').value||'').trim();
+  const subj=$('em-subj').value||'Base Utilidades Agrivalle';
+  const corpo='Responsável: '+(CFG.ultimoResp||respAtual()||'-')+'\n\nSegue a Base Utilidades Agrivalle atualizada em '+new Date().toLocaleString('pt-BR')+'. Baixe o anexo e carregue no dashboard (botão "Atualizar dados").';
+  const wb=construirWb();
+  XLSX.writeFile(wb,'Base_Utilidades_Agrivalle.xlsx');
+  const buf=XLSX.write(wb,{bookType:'xlsx',type:'array'});
+  const file=new File([buf],'Base_Utilidades_Agrivalle.xlsx',{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+  try{
+    if(navigator.canShare && navigator.canShare({files:[file]})){
+      await navigator.share({files:[file], title:subj, text:corpo});
+      setStatus('Planilha salva e compartilhada — escolha o e-mail no menu.');
+      return;
+    }
+  }catch(err){ if(err && err.name==='AbortError'){ setStatus('Planilha salva.'); return; } }
+  const corpo2=corpo+'\n\n(Anexe o arquivo Base_Utilidades_Agrivalle.xlsx que acabou de ser baixado.)';
+  window.location.href='mailto:'+encodeURIComponent(to)+'?subject='+encodeURIComponent(subj)+'&body='+encodeURIComponent(corpo2);
+  setStatus('Planilha salva e e-mail aberto — anexe o arquivo e envie.');
+}
+
+/* =====================================================================
+   CADASTRO (responsáveis, produtos, e-mails)
+   ===================================================================== */
+function addLista(arr,val){ val=(val||'').trim(); if(!val) return false; if(arr.some(x=>x.toLowerCase()===val.toLowerCase())) return false; arr.push(val); return true; }
+function addResp(){ if(addLista(CFG.responsaveis,$('cad-resp-in').value)){ CFG.responsaveis.sort((a,b)=>a.localeCompare(b)); salvarCfg(); $('cad-resp-in').value=''; renderCadastro(); atualizarDatalists(); } }
+function addProdCad(){ if(addLista(CFG.produtos,$('cad-prod-in').value)){ CFG.produtos.sort((a,b)=>a.localeCompare(b)); salvarCfg(); $('cad-prod-in').value=''; renderCadastro(); atualizarDatalists(); } }
+function addEmail(){ if(addLista(CFG.emails,$('cad-email-in').value)){ salvarCfg(); $('cad-email-in').value=''; renderCadastro(); } }
+function delResp(i){ CFG.responsaveis.splice(i,1); salvarCfg(); renderCadastro(); atualizarDatalists(); }
+function delProd(i){ CFG.produtos.splice(i,1); salvarCfg(); renderCadastro(); atualizarDatalists(); }
+function delEmail(i){ CFG.emails.splice(i,1); salvarCfg(); renderCadastro(); }
+let _dcharts={};
+if(typeof Chart!=='undefined' && typeof ChartDataLabels!=='undefined'){ try{Chart.register(ChartDataLabels);}catch(e){} if(Chart.defaults&&Chart.defaults.plugins) Chart.defaults.plugins.datalabels={display:false}; }
+if(typeof pdfjsLib!=='undefined'){ try{ pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'; }catch(e){} }
+const BARLBL={display:ctx=>ctx.dataset.type!=='line',anchor:ctx=>ctx.dataset.stack?'center':'end',align:ctx=>ctx.dataset.stack?'center':'end',color:ctx=>ctx.dataset.stack?'#fff':'#374151',font:{weight:'700',size:9},formatter:v=>(v==null||v===0||isNaN(v))?'':Number(v).toLocaleString('pt-BR',{maximumFractionDigits:0})};
+function dgraf(id,cfg){ if(typeof Chart==='undefined')return; if(_dcharts[id])_dcharts[id].destroy(); const el=$(id); if(!el)return; _dcharts[id]=new Chart(el,cfg); }
+function imprimirDash(){ window.print(); }
+function renderDash(){
+  const ay=new Date().getFullYear();
+  const ag=U.agua.filter(r=>r.ano===ay), en=U.energia.filter(r=>r.ano===ay), gs=U.gas.filter(r=>r.ano===ay);
+  const agVol=ag.reduce((s,r)=>s+((r.saae_m3||0)+(r.po_m3||0)),0), agCusto=ag.reduce((s,r)=>s+((r.saae_poco||0)+(r.po_val||0)),0);
+  const enKwh=en.reduce((s,r)=>s+(r.kwh||0),0), enEco=en.reduce((s,r)=>s+(r.eco||0),0), gsVol=gs.reduce((s,r)=>s+(r.m3||0),0);
+  if($('dk-agua')) $('dk-agua').textContent=NUM(agVol)+' m³';
+  if($('dk-aguac')) $('dk-aguac').textContent=BRL(agCusto);
+  if($('dk-en')) $('dk-en').textContent=NUM(enKwh)+' kWh';
+  if($('dk-eneco')) $('dk-eneco').textContent=BRL(enEco);
+  const enCusto=en.reduce((s,r)=>s+(r.livre||0),0); if($('dk-encusto')) $('dk-encusto').textContent=BRL(enCusto);
+  if($('dk-gas')) $('dk-gas').textContent=NUM(gsVol)+' m³';
+  const gsCusto=gs.reduce((s,r)=>s+(r.valor||0),0);
+  if($('dk-gasc')) $('dk-gasc').textContent=BRL(gsCusto);
+  if($('dk-eten')) $('dk-eten').textContent=U.ana_int.length;
+  if($('dk-eteoc')) $('dk-eteoc').textContent=U.ana_int.filter(e=>e.fato||e.causa||e.acao).length;
+  if($('dk-etan')) $('dk-etan').textContent=U.eta.length;
+  if($('dk-etaoc')) $('dk-etaoc').textContent=U.eta.filter(e=>e.fato||e.causa||e.acao).length;
+  const agS=[...ag].sort((a,b)=>a.mes-b.mes);
+  dgraf('dch-agua',{type:'bar',data:{labels:agS.map(r=>MESN3[r.mes-1]),datasets:[
+    {label:'SAAE m³',data:agS.map(r=>r.saae_m3||0),backgroundColor:'#2d5282',stack:'v'},
+    {label:'Point One m³',data:agS.map(r=>r.po_m3||0),backgroundColor:'#38bdf8',stack:'v'},
+    {type:'line',label:'Custo R$',data:agS.map(r=>Math.round((r.saae_poco||0)+(r.po_val||0))),borderColor:'#d97706',backgroundColor:'#d97706',yAxisID:'y2',tension:.3}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{datalabels:BARLBL,legend:{position:'bottom'}},scales:{x:{stacked:true},y:{stacked:true,beginAtZero:true},y2:{position:'right',beginAtZero:true,grid:{drawOnChartArea:false}}}}});
+  const enS=[...en].sort((a,b)=>a.mes-b.mes);
+  dgraf('dch-en',{type:'bar',data:{labels:enS.map(r=>MESN3[r.mes-1]),datasets:[
+    {label:'kWh',data:enS.map(r=>r.kwh||0),backgroundColor:'#d97706'}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{datalabels:BARLBL,legend:{display:false}},scales:{y:{beginAtZero:true}}}});
+  const gsS=[...gs].sort((a,b)=>a.mes-b.mes);
+  dgraf('dch-gas',{type:'bar',data:{labels:gsS.map(r=>MESN3[r.mes-1]),datasets:[{label:'m³',data:gsS.map(r=>r.m3||0),backgroundColor:'#5d7261'}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{datalabels:BARLBL,legend:{display:false}},scales:{y:{beginAtZero:true}}}});
+  const ie=[...U.ana_int].sort((a,b)=>a.d<b.d?-1:1), lbE=ie.map(e=>dBR(e.d));
+  dgraf('dch-ete',{type:'line',data:{labels:lbE,datasets:[
+    {label:'pH',data:ie.map(e=>e.ph),borderColor:'#2563eb',tension:.3,pointRadius:1.5,spanGaps:true},
+    {label:'Zinco',data:ie.map(e=>e.zn),borderColor:'#0891b2',tension:.3,pointRadius:1.5,spanGaps:true},
+    {label:'Níquel',data:ie.map(e=>e.ni),borderColor:'#7c3aed',tension:.3,pointRadius:1.5,spanGaps:true},
+    {label:'Cobre',data:ie.map(e=>e.cu),borderColor:'#d97706',tension:.3,pointRadius:1.5,spanGaps:true}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}},scales:{x:{ticks:{maxTicksLimit:12}},y:{beginAtZero:true}}}});
+  const et=[...U.eta].sort((a,b)=>a.d<b.d?-1:1), pts=[...new Set(et.map(e=>e.ponto).filter(Boolean))], dias=[...new Set(et.map(e=>e.d))].sort(), cor=['#64748b','#2563eb','#16a34a','#d97706','#7c3aed'];
+  dgraf('dch-eta',{type:'line',data:{labels:dias.map(d=>dBR(d)),datasets:pts.map((p,i)=>({label:p,data:dias.map(d=>{const r=et.find(e=>e.d===d&&e.ponto===p);return r&&r.ph!=null?r.ph:null;}),borderColor:cor[i%cor.length],backgroundColor:cor[i%cor.length],tension:.3,pointRadius:1.5,spanGaps:true}))},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}},scales:{x:{ticks:{maxTicksLimit:12}}}}});
+  const occ=[...U.ana_int.filter(e=>e.fato||e.causa||e.acao).map(e=>({d:e.d,org:'ETE',f:e.fato,c:e.causa,a:e.acao})),...U.eta.filter(e=>e.fato||e.causa||e.acao).map(e=>({d:e.d,org:'ETA·'+(e.ponto||''),f:e.fato,c:e.causa,a:e.acao}))].sort((x,y)=>x.d<y.d?1:-1);
+  const ext=U.ana_ext, cf=ext.filter(e=>e.parecer==='CONFORME').length;
+  if($('dk-extn')) $('dk-extn').textContent=ext.length;
+  if($('dk-extconf')) $('dk-extconf').textContent=ext.length?Math.round(100*cf/ext.length)+'%':'—';
+  dgraf('dch-conf',{type:'doughnut',data:{labels:['Conforme','Não conforme'],datasets:[{data:[cf,ext.length-cf],backgroundColor:['#16a34a','#dc2626']}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}}}});
+  const exv=U.ana_ext.filter(e=>e.zn!=null||e.ni!=null||e.cu!=null||e.ph!=null).sort((a,b)=>a.d<b.d?-1:1);
+  dgraf('dch-exttrend',{type:'line',data:{labels:exv.map(e=>dBR(e.d)),datasets:[
+    {label:'Zinco',data:exv.map(e=>e.zn),borderColor:'#0891b2',tension:.3,pointRadius:2,spanGaps:true},
+    {label:'Níquel',data:exv.map(e=>e.ni),borderColor:'#7c3aed',tension:.3,pointRadius:2,spanGaps:true},
+    {label:'Cobre',data:exv.map(e=>e.cu),borderColor:'#d97706',tension:.3,pointRadius:2,spanGaps:true},
+    {label:'pH',data:exv.map(e=>e.ph),borderColor:'#2563eb',borderDash:[5,3],tension:.3,pointRadius:2,spanGaps:true,yAxisID:'y2'}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}},scales:{y:{beginAtZero:true,title:{display:true,text:'mg/L'}},y2:{position:'right',beginAtZero:true,grid:{drawOnChartArea:false},title:{display:true,text:'pH'}}}}});
+  const a8=U.ana_888||[]; const c8=a8.filter(e=>e.parecer==='CONFORME').length;
+  if($('dk-888n')) $('dk-888n').textContent=a8.length;
+  if($('dk-888conf')) $('dk-888conf').textContent=a8.length?Math.round(100*c8/a8.length)+'%':'—';
+  const p8=[...new Set(a8.map(e=>e.ponto).filter(Boolean))], d8=[...new Set(a8.map(e=>e.d))].sort(), cor8=['#0891b2','#2563eb','#16a34a','#d97706','#7c3aed','#dc2626','#64748b'];
+  function _mk888(cid,campo,titulo){ dgraf(cid,{type:'line',data:{labels:d8.map(d=>dBR(d)),datasets:p8.map((pt,i)=>({label:pt,data:d8.map(d=>{const r=a8.find(e=>e.d===d&&e.ponto===pt);return r&&r[campo]!=null?r[campo]:null;}),borderColor:cor8[i%cor8.length],backgroundColor:cor8[i%cor8.length],tension:.3,pointRadius:2,spanGaps:true}))},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}},scales:{y:{beginAtZero:true,title:{display:true,text:titulo}}}}}); }
+  _mk888('dch-888','cloro','Cloro mg/L (0,2–5)');
+  _mk888('dch-888turb','turbidez','Turbidez NTU (máx 5)');
+  _mk888('dch-888cor','cor','Cor mg Pt-Co/L (máx 15)');
+  if($('dtb-occ')) $('dtb-occ').innerHTML=occ.length?('<thead><tr><th>Data</th><th>Origem</th><th>Fato</th><th>Causa</th><th>Ação</th></tr></thead><tbody>'+occ.map(o=>'<tr><td>'+dBR(o.d)+'</td><td>'+o.org+'</td><td>'+(o.f||'—')+'</td><td>'+(o.c||'—')+'</td><td>'+(o.a||'—')+'</td></tr>').join('')+'</tbody>'):'<tbody><tr><td class="empty">Nenhuma ocorrência.</td></tr></tbody>';
+}
+function renderCadastro(){
+  const mk=(arr,fn)=> arr.length? '<tbody>'+arr.map((v,i)=>'<tr><td>'+v+'</td><td style="text-align:right;width:40px;"><button class="del" onclick="'+fn+'('+i+')">✕</button></td></tr>').join('')+'</tbody>' : '<tbody><tr><td class="empty">Nenhum cadastrado.</td></tr></tbody>';
+  if($('tbl-cad-resp')) $('tbl-cad-resp').innerHTML=mk(CFG.responsaveis,'delResp');
+  if($('tbl-cad-prod')) $('tbl-cad-prod').innerHTML=mk(CFG.produtos,'delProd');
+  if($('tbl-cad-email')) $('tbl-cad-email').innerHTML=mk(CFG.emails,'delEmail');
+}
+function atualizarDatalists(){
+  const lr=$('lst-resp'); if(lr) lr.innerHTML=CFG.responsaveis.map(v=>'<option value="'+v.replace(/"/g,'&quot;')+'">').join('');
+  const lp=$('lst-prod'); if(lp){ const set=[...new Set([...CFG.produtos, ...U.prod.map(r=>r.p)])]; lp.innerHTML=set.map(p=>'<option value="'+String(p).replace(/"/g,'&quot;')+'">').join(''); }
+}
+
+/* ---------- init ---------- */
+carregarLS();
+carregarCfg();
+renderTudo();
+atualizarDatalists();
+if($('resp-atual')) $('resp-atual').value=CFG.ultimoResp||'';
+if($('et-ponto')) etaCampos();
+</script>
+</body>
+</html>
