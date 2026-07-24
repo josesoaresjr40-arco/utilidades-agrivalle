@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#fd592d">
-<link rel="manifest" href="./manifest.json">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
 <title>Alimentador · Dashboard Utilidades</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -34,7 +33,8 @@ h1,h2,h3,.btn,.nav-item,.hc-name,.export-title,.splash-title{font-family:'Poppin
 .card{background:var(--card);border-radius:12px;padding:20px;box-shadow:0 1px 4px rgba(0,0,0,.07);margin-bottom:20px;}
 .card h3{font-size:15px;font-weight:700;margin-bottom:14px;}
 .form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:14px;}
-.fld{display:flex;flex-direction:column;gap:4px;}
+.fld{display:flex;flex-direction:column;gap:4px;justify-content:flex-end;}
+.fld input,.fld select{margin-top:auto;}
 .fld label{font-size:12px;font-weight:600;color:var(--muted);}
 .fld input,.fld select{border:1px solid var(--border);border-radius:8px;padding:9px 10px;font-size:14px;background:#fff;}
 .fld input:focus,.fld select:focus{outline:2px solid #bfdbfe;border-color:#93c5fd;}
@@ -97,6 +97,8 @@ tr:hover td{background:#f9fafb;}
 .home-card .hc-name{font-size:15px;font-weight:700;color:var(--text);text-align:center;line-height:1.2;}
 .home-card .hc-icon{font-size:48px;line-height:1;}
 @media(max-width:600px){.home-grid{grid-template-columns:repeat(3,1fr);gap:8px;}.home-card{padding:14px 6px;gap:6px;}.home-card .hc-name{font-size:12px;}.home-card .hc-icon{font-size:34px;}}
+#tbl-agua-dia{font-size:12px;width:100%;}
+#tbl-agua-dia th,#tbl-agua-dia td{padding:5px 7px;white-space:nowrap;}
 </style>
 </head>
 <body>
@@ -188,14 +190,67 @@ tr:hover td{background:#f9fafb;}
     <div class="card"><h3>⚠️ Ocorrências (Fato / Causa / Ação)</h3><div class="tbl-wrap"><table id="dtb-occ"></table></div></div>
   </div>
 
+  <!-- AJUDA -->
+  <div id="tab-help" class="tab-content">
+    <div class="card"><div class="dash-sec">❓ Ajuda — Utilidades Agrivalle</div>
+      <p style="line-height:1.7">Este app registra e acompanha as <b>utilidades da Agrivalle</b> (Água, Energia, Gás e Análises de água), calcula rateios por centro de custo, lê PDFs de análises e gera gráficos e planilha para alimentar o dashboard. Os dados ficam salvos <b>no próprio aparelho</b> (não vão para a nuvem automaticamente).</p>
+    </div>
+
+    <div class="card"><h3>🏠 Início e Responsável</h3>
+      <p style="line-height:1.7">Na tela Início ficam os ícones das categorias. <b>Selecione o Responsável</b> no campo do topo — ele é <b>obrigatório</b>: sem ele, as categorias de lançamento não abrem. Os nomes disponíveis são cadastrados na aba <b>Cadastro</b>. Toque em uma categoria para abrir o formulário; use o botão <b>← Início</b> para voltar.</p>
+    </div>
+
+    <div class="card"><h3>💧 Água</h3>
+      <p style="line-height:1.7"><b>Leituras diárias de hidrômetro</b> (leitura acumulada): Poço artesiano, Caixa 170 m³, Água de Reuso e Volume tratado ETE — o app calcula o <b>consumo do dia</b> pela diferença entre leituras.</p>
+      <p style="line-height:1.7"><b>Mensal:</b> SAAE Volume/Valor Total e Point One Volume/Valor Total, com a coluna Valor Total (soma). Mostra só o ano vigente.</p>
+      <p style="line-height:1.7"><b>Comparativo:</b> consumo diário da Caixa 170 m³ × total do mês (SAAE + Point One).</p>
+      <p style="line-height:1.7"><b>Rateio por Centro de Custo:</b> distribui o custo da água pelos centros de custo (percentuais editáveis por CC). Escolha o mês, ajuste os % se preciso e clique em Salvar.</p>
+    </div>
+
+    <div class="card"><h3>⚡ Energia e 🔥 Gás</h3>
+      <p style="line-height:1.7"><b>Energia (mensal):</b> Consumo (kWh), Custo Livre e Custo Cativo — a Economia é calculada automaticamente. <b>Gás (mensal):</b> Volume e Valor, com Consumo/dia (volume ÷ 30). Ambos têm <b>Rateio por Centro de Custo</b> próprio (Energia rateia o custo livre; Gás rateia o valor).</p>
+    </div>
+
+    <div class="card"><h3>🧪 Análises ETE (Portaria 19A — interna)</h3>
+      <p style="line-height:1.7">Parâmetros e limites: <b>pH 6,0–10,0 · Temperatura ≤40°C · Zinco ≤5,0 · Níquel ≤2,0 · Cobre ≤1,5 · Sulfato ≤1000 ppm</b>. Valores fora da faixa ficam em vermelho e abrem a janela <b>Fato / Causa / Ação</b> para descrever a ocorrência. Clique no valor em vermelho (ou no ⚠) para ver/editar a ocorrência.</p>
+    </div>
+
+    <div class="card"><h3>🚰 Análises ETA (por ponto)</h3>
+      <p style="line-height:1.7">Uma linha por ponto: <b>Poço Profundo</b> e <b>Caixa 170 m³</b> (Cloro 0,2–5 ppm · pH 6,5–8,5 · Temp ≤40°C); <b>Água Abrandada</b> e <b>Abrandada BIO</b> (pH 6,2–8,0); <b>Abrandada Caldeira</b> (pH 10,5–11,5). Preencha os pontos e clique em Salvar medições; fora da faixa abre Fato/Causa/Ação.</p>
+    </div>
+
+    <div class="card"><h3>📄 Análises Externas — Portaria 19A e 888</h3>
+      <p style="line-height:1.7">Dois botões separam <b>Portaria 19A</b> (Aqualab) e <b>Portaria 888</b> (água potável). Em cada uma, clique em <b>📎 Ler PDF e adicionar</b>: o app abre o PDF, extrai a <b>data</b>, o <b>nº do relatório</b> e os valores, e preenche a linha com o <b>Status (Conforme/Não conforme)</b>. Na 888 o status vem da declaração "ATENDE" do laudo; na 19A é comparado com os limites do Art. 19A. Há filtro por ano, botão Limpar ano e checagem de duplicados (não repete o mesmo nº).</p>
+    </div>
+
+    <div class="card"><h3>📊 Dashboard</h3>
+      <p style="line-height:1.7">Monta os gráficos <b>ao vivo</b> com o que você lançou: consumo/custo de Água, Energia e Gás (ano vigente), tendências de análises (ETE, ETA, Externas 19A e 888), conformidade e a tabela de ocorrências. Botão <b>🖨️ Exportar PDF</b> gera o PDF do dashboard.</p>
+    </div>
+
+    <div class="card"><h3>📤 Envio, Exportar e Backup</h3>
+      <p style="line-height:1.7"><b>Enviar por e-mail</b> gera a planilha, salva no aparelho e abre o e-mail com o anexo (no PC baixa a planilha e abre um e-mail para anexar). <b>Exportar planilha (.xlsx)</b> gera a Base_Utilidades_Agrivalle.xlsx (formato do dashboard). <b>Backup (.json)</b> salva uma cópia de tudo; <b>Restaurar</b> recarrega de um backup. As abas Água, Energia e Gás também têm <b>🖨️ Exportar/Enviar PDF</b> só daquela categoria.</p>
+    </div>
+
+    <div class="card"><h3>🗂️ Cadastro (com senha)</h3>
+      <p style="line-height:1.7">Gerencia <b>Responsáveis</b>, <b>Produtos ETE</b> e <b>E-mails</b> destinatários, e mostra a lista de <b>parâmetros coletados</b> por categoria. Protegido por senha (padrão configurável no código).</p>
+    </div>
+
+    <div class="card"><h3>ℹ️ Observações</h3>
+      <p style="line-height:1.7">Os dados são salvos localmente no navegador/aparelho (não se misturam com outros apps). Fonte, gráficos, leitura de PDF e o logo carregam da <b>internet</b> na primeira vez; depois o app abre offline (a leitura de PDF e os gráficos precisam de rede). Para alimentar o dashboard: exporte/gere a planilha e use "🔄 Atualizar dados" no dashboard.</p>
+    </div>
+  </div>
+
   <!-- ÁGUA -->
   <div id="tab-agua" class="tab-content">
+    <div class="no-print" style="text-align:right;margin-bottom:10px;"><button class="btn red" onclick="window.print()">🖨️ Exportar / Enviar PDF</button></div>
     <div class="card">
       <h3>💧 Leituras diárias de hidrômetro</h3>
       <div class="form-grid">
         <div class="fld"><label>Data</label><input type="date" id="ad-d"></div>
         <div class="fld"><label>Leitura Poço artesiano (m³)</label><input type="text" inputmode="decimal" id="ad-poco"></div>
         <div class="fld"><label>Leitura Caixa 170 m³ (m³)</label><input type="text" inputmode="decimal" id="ad-cx170"></div>
+        <div class="fld"><label>Leitura Água de Reuso (m³)</label><input type="text" inputmode="decimal" id="ad-reuso"></div>
+        <div class="fld"><label>Leitura Volume ETE (m³)</label><input type="text" inputmode="decimal" id="ad-ete"></div>
       </div>
       <div class="calc" id="ad-calc" style="margin-top:0;">Digite a leitura que aparece no hidrômetro. O consumo do dia é calculado pela diferença.</div>
       <button class="btn green" onclick="addAguaDia()">➕ Salvar leitura</button>
@@ -215,10 +270,24 @@ tr:hover td{background:#f9fafb;}
     </div>
     <div class="card"><h3>Registros de Água <span class="count" id="cnt-agua"></span></h3><div class="tbl-wrap"><table id="tbl-agua"></table></div></div>
     <div class="card"><h3>📊 Comparativo: consumo diário CX170 × total do mês (SAAE + Point One)</h3><div class="tbl-wrap"><table id="tbl-agua-comp"></table></div></div>
+    <div class="card">
+      <h3>🏷️ Rateio por Centro de Custo — Água</h3>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px;">
+        <label style="font-size:12px;color:var(--muted);font-weight:700;">Mês:</label>
+        <select id="rt-agua-mes" onchange="renderRateio('agua')" style="border:1px solid var(--border);border-radius:8px;padding:6px 10px;font-size:14px;"></select>
+        <span id="rt-agua-total" class="hint" style="margin:0;"></span>
+      </div>
+      <div class="tbl-wrap"><table id="tbl-rateio-agua"></table></div>
+      <div style="margin-top:10px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+        <button class="btn green" onclick="salvarRateio('agua')" style="padding:8px 14px;">💾 Salvar percentuais</button>
+        <span id="rt-agua-soma" class="hint" style="margin:0;"></span>
+      </div>
+    </div>
   </div>
 
   <!-- ENERGIA -->
   <div id="tab-energia" class="tab-content">
+    <div class="no-print" style="text-align:right;margin-bottom:10px;"><button class="btn red" onclick="window.print()">🖨️ Exportar / Enviar PDF</button></div>
     <div class="card">
       <h3>Adicionar / atualizar mês — Energia</h3>
       <div class="form-grid">
@@ -232,10 +301,24 @@ tr:hover td{background:#f9fafb;}
       <button class="btn green" onclick="addEnergia()">➕ Salvar mês</button>
     </div>
     <div class="card"><h3>Registros de Energia <span class="count" id="cnt-energia"></span></h3><div class="tbl-wrap"><table id="tbl-energia"></table></div></div>
+    <div class="card">
+      <h3>🏷️ Rateio por Centro de Custo — Energia (custo mercado livre)</h3>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px;">
+        <label style="font-size:12px;color:var(--muted);font-weight:700;">Mês:</label>
+        <select id="rt-energia-mes" onchange="renderRateio('energia')" style="border:1px solid var(--border);border-radius:8px;padding:6px 10px;font-size:14px;"></select>
+        <span id="rt-energia-total" class="hint" style="margin:0;"></span>
+      </div>
+      <div class="tbl-wrap"><table id="tbl-rateio-energia"></table></div>
+      <div style="margin-top:10px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+        <button class="btn green" onclick="salvarRateio('energia')" style="padding:8px 14px;">💾 Salvar percentuais</button>
+        <span id="rt-energia-soma" class="hint" style="margin:0;"></span>
+      </div>
+    </div>
   </div>
 
   <!-- GÁS -->
   <div id="tab-gas" class="tab-content">
+    <div class="no-print" style="text-align:right;margin-bottom:10px;"><button class="btn red" onclick="window.print()">🖨️ Exportar / Enviar PDF</button></div>
     <div class="card">
       <h3>Adicionar / atualizar mês — Gás Natural</h3>
       <div class="form-grid">
@@ -247,6 +330,19 @@ tr:hover td{background:#f9fafb;}
       <button class="btn green" onclick="addGas()">➕ Salvar mês</button>
     </div>
     <div class="card"><h3>Registros de Gás <span class="count" id="cnt-gas"></span></h3><div class="tbl-wrap"><table id="tbl-gas"></table></div></div>
+    <div class="card">
+      <h3>🏷️ Rateio por Centro de Custo — Gás Natural</h3>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px;">
+        <label style="font-size:12px;color:var(--muted);font-weight:700;">Mês:</label>
+        <select id="rt-gas-mes" onchange="renderRateio('gas')" style="border:1px solid var(--border);border-radius:8px;padding:6px 10px;font-size:14px;"></select>
+        <span id="rt-gas-total" class="hint" style="margin:0;"></span>
+      </div>
+      <div class="tbl-wrap"><table id="tbl-rateio-gas"></table></div>
+      <div style="margin-top:10px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+        <button class="btn green" onclick="salvarRateio('gas')" style="padding:8px 14px;">💾 Salvar percentuais</button>
+        <span id="rt-gas-soma" class="hint" style="margin:0;"></span>
+      </div>
+    </div>
   </div>
 
   <!-- ANÁLISES ETE (internas) -->
@@ -451,6 +547,7 @@ tr:hover td{background:#f9fafb;}
   <button class="nav-item" data-tab="prod" onclick="abrirTab('prod')"><span class="nav-icon">⚗️</span><span>Produtos</span></button>
   <button class="nav-item" data-tab="envio" onclick="abrirTab('envio')"><span class="nav-icon">📤</span><span>Envio</span></button>
   <button class="nav-item" data-tab="cadastro" onclick="abrirTab('cadastro')"><span class="nav-icon">🗂️</span><span>Cadastro</span></button>
+  <button class="nav-item" data-tab="help" onclick="abrirTab('help')"><span class="nav-icon">❓</span><span>Ajuda</span></button>
 </div>
 
 <script>
@@ -469,11 +566,50 @@ const MESNUM={'JANEIRO':1,'FEVEREIRO':2,'MARÇO':3,'MARCO':3,'ABRIL':4,'MAIO':5,
 
 let U = {agua:[],agua_diario:[],energia:[],gas:[],ana_int:[],ana_ext:[],ana_888:[],eta:[],prod:[]};
 let dashboardTemplate = null;   // texto do dashboard_utilidades.html carregado
-let CFG = {responsaveis:[],produtos:[],emails:[],ultimoResp:''};
+let CFG = {responsaveis:[],produtos:[],emails:[],ultimoResp:'',rateio:[]};
 const CFG_KEY='alimentador_utilidades_v1_cfg';
+const RATEIO_DEFAULT=[
+ {cc:'2060002000',celula:'PRODUÇÃO FERTILIZANTES',agua:7,energia:7,gas:0},
+ {cc:'2060003000',celula:'FORMULAÇÃO BIORREATOR',agua:30,energia:20,gas:89},
+ {cc:'2060004000',celula:'FORMULAÇÃO BIO SÓLIDOS',agua:30,energia:41,gas:0},
+ {cc:'2060009000',celula:'PRODUÇÃO INGREDIENTE ATIVO',agua:0,energia:0,gas:0},
+ {cc:'2060014000',celula:'FORMULAÇÃO BIO LIQUIDOS',agua:7,energia:6,gas:0},
+ {cc:'2060019000',celula:'ENVASE FERTILIZANTES',agua:7,energia:3,gas:0},
+ {cc:'2060020000',celula:'ENVASE BIO SÓLIDOS',agua:0,energia:4,gas:0},
+ {cc:'2060021000',celula:'ENVASE BIO LIQUIDOS',agua:7,energia:3,gas:0},
+ {cc:'0',celula:'ADM',agua:10,energia:6,gas:2},
+ {cc:'0',celula:'P&D',agua:2,energia:10,gas:9}
+];
 function salvarCfg(){ try{ localStorage.setItem(CFG_KEY, JSON.stringify(CFG)); }catch(e){} }
-function carregarCfg(){ try{ const s=localStorage.getItem(CFG_KEY); if(s) CFG=Object.assign({responsaveis:[],produtos:[],emails:[],ultimoResp:''}, JSON.parse(s)); }catch(e){} }
+function carregarCfg(){ try{ const s=localStorage.getItem(CFG_KEY); if(s) CFG=Object.assign({responsaveis:[],produtos:[],emails:[],ultimoResp:'',rateio:[]}, JSON.parse(s)); }catch(e){} if(!CFG.rateio||!CFG.rateio.length||!('agua' in (CFG.rateio[0]||{}))) CFG.rateio=RATEIO_DEFAULT.map(function(x){return Object.assign({},x);}); }
 function respAtual(){ return (($('resp-atual')&&$('resp-atual').value)||'').trim(); }
+const RATEIO_UTIS={agua:{label:'Água',get:function(){return U.agua;},total:function(r){return (r.saae_poco||0)+(r.po_val||0);}},energia:{label:'Energia',get:function(){return U.energia;},total:function(r){return (r.livre||0);}},gas:{label:'Gás',get:function(){return U.gas;},total:function(r){return (r.valor||0);}}};
+function renderRateio(util){
+  var cfgu=RATEIO_UTIS[util]; if(!cfgu) return; var sel=$('rt-'+util+'-mes'); if(!sel) return;
+  var ay=new Date().getFullYear(); var meses=cfgu.get().filter(function(r){return r.ano===ay;}).sort(function(a,b){return a.mes-b.mes;}); var atual=sel.value;
+  if(!meses.length){ sel.innerHTML='<option value="">—</option>'; } else { sel.innerHTML=meses.map(function(r){return '<option value="'+r.mes+'">'+MESN3[r.mes-1]+'/'+r.ano+'</option>';}).join(''); sel.value=meses.some(function(r){return String(r.mes)===atual;})?atual:String(meses[meses.length-1].mes); }
+  var mes=parseInt(sel.value,10); var rec=cfgu.get().find(function(r){return r.ano===ay&&r.mes===mes;}); var total=rec?cfgu.total(rec):0;
+  if($('rt-'+util+'-total')) $('rt-'+util+'-total').textContent=rec?('Total do mês: '+BRL(total)):'Sem dados do mês.';
+  var rt=CFG.rateio||[]; var soma=rt.reduce(function(sm,x){return sm+(+x[util]||0);},0);
+  var t=$('tbl-rateio-'+util); if(!t) return;
+  t.innerHTML='<thead><tr><th>Centro de Custo</th><th>Célula</th><th>%</th><th>Valor (R$)</th></tr></thead><tbody>'+
+    rt.map(function(x,i){return '<tr><td>'+(x.cc||'—')+'</td><td>'+String(x.celula||'').replace(/</g,'&lt;')+'</td>'+
+      '<td><input type="text" inputmode="decimal" id="rt-'+util+'-pct-'+i+'" value="'+(x[util]!=null?x[util]:'')+'" oninput="recalcRateio(&#39;'+util+'&#39;)" style="border:1px solid var(--border);border-radius:6px;padding:5px 8px;width:64px;"> %</td>'+
+      '<td id="rt-'+util+'-val-'+i+'">'+BRL(total*(+x[util]||0)/100)+'</td></tr>';}).join('')+
+      '<tr style="font-weight:700;background:var(--bg)"><td>TOTAL</td><td>—</td><td id="rt-'+util+'-soma-cell">'+(Math.round(soma*100)/100)+'%</td><td>'+BRL(total*soma/100)+'</td></tr></tbody>';
+  recalcRateio(util);
+}
+function recalcRateio(util){
+  var cfgu=RATEIO_UTIS[util]; var sel=$('rt-'+util+'-mes'); var ay=new Date().getFullYear(); var mes=parseInt(sel&&sel.value,10);
+  var rec=cfgu.get().find(function(r){return r.ano===ay&&r.mes===mes;}); var total=rec?cfgu.total(rec):0; var soma=0;
+  (CFG.rateio||[]).forEach(function(x,i){ var pe=$('rt-'+util+'-pct-'+i); var p=pe?(num(pe.value)||0):(+x[util]||0); soma+=p; var vc=$('rt-'+util+'-val-'+i); if(vc) vc.textContent=BRL(total*p/100); });
+  soma=Math.round(soma*100)/100; var sc=$('rt-'+util+'-soma-cell'); if(sc) sc.textContent=soma+'%';
+  if($('rt-'+util+'-soma')) $('rt-'+util+'-soma').innerHTML=(Math.abs(soma-100)<0.01)?'<span style="color:var(--success)">Soma 100% ✓</span>':'<span style="color:var(--warning)">⚠ Soma '+soma+'%</span>';
+}
+function salvarRateio(util){
+  (CFG.rateio||[]).forEach(function(x,i){ var pe=$('rt-'+util+'-pct-'+i); if(pe) x[util]=num(pe.value)||0; });
+  salvarCfg(); renderRateio(util); setStatus('Percentuais de rateio ('+RATEIO_UTIS[util].label+') salvos.');
+}
 function exigeResp(){ const r=respAtual(); if(!r){ alert('Informe o Responsável no topo antes de salvar.'); const el=$('resp-atual'); if(el) el.focus(); return null; } if(CFG.ultimoResp!==r){ CFG.ultimoResp=r; salvarCfg(); } return r; }
 let editKey = {};               // controle de edição por aba
 
@@ -560,12 +696,12 @@ function editAgua(i){const r=U.agua[i];$('ag-ano').value=r.ano;$('ag-mes').value
 function addAguaDia(){
   const d=$('ad-d').value; if(!d){ alert('Informe a Data.'); return; }
   const resp=exigeResp(); if(resp===null) return;
-  const poco=num($('ad-poco').value), cx170=num($('ad-cx170').value);
-  if(poco==null && cx170==null){ alert('Informe ao menos uma leitura (Poço ou Caixa 170).'); return; }
+  const poco=num($('ad-poco').value), cx170=num($('ad-cx170').value), reuso=num($('ad-reuso').value), ete=num($('ad-ete').value);
+  if(poco==null && cx170==null && reuso==null && ete==null){ alert('Informe ao menos uma leitura (Poço, Caixa 170, Reuso ou ETE).'); return; }
   const k=U.agua_diario.findIndex(r=>r.d===d);
-  const reg={d,poco,cx170,resp};
-  if(k>=0) U.agua_diario[k]=reg; else U.agua_diario.push(reg);
-  ['ad-poco','ad-cx170'].forEach(x=>$(x).value='');
+  if(k>=0){ const ex=U.agua_diario[k]; if(poco!=null)ex.poco=poco; if(cx170!=null)ex.cx170=cx170; if(reuso!=null)ex.reuso=reuso; if(ete!=null)ex.ete=ete; ex.resp=resp; }
+  else U.agua_diario.push({d,poco,cx170,reuso,ete,resp});
+  ['ad-poco','ad-cx170','ad-reuso','ad-ete'].forEach(x=>$(x).value='');
   persistir(); renderAguaDia(); setStatus('Leitura de '+dBR(d)+' salva.');
 }
 function renderAguaDia(){
@@ -575,13 +711,15 @@ function renderAguaDia(){
     const prev=arr[k-1];
     const cp=(r.poco!=null&&prev&&prev.poco!=null)?Math.round((r.poco-prev.poco)*1000)/1000:null;
     const cc=(r.cx170!=null&&prev&&prev.cx170!=null)?Math.round((r.cx170-prev.cx170)*1000)/1000:null;
-    return {r,cp,cc,oi:U.agua_diario.indexOf(r)};
+    const cr=(r.reuso!=null&&prev&&prev.reuso!=null)?Math.round((r.reuso-prev.reuso)*1000)/1000:null;
+    const ce=(r.ete!=null&&prev&&prev.ete!=null)?Math.round((r.ete-prev.ete)*1000)/1000:null;
+    return {r,cp,cc,cr,ce,oi:U.agua_diario.indexOf(r)};
   });
   const L = verTudo?wc:wc.filter(o=>naSemana(o.r.d));
   const t=$('tbl-agua-dia');
-  if(!L.length){ t.innerHTML=vazioMsg(6); }
-  else t.innerHTML='<thead><tr><th>Data</th><th>Leitura Poço (m³)</th><th>Consumo Poço/dia (m³)</th><th>Leitura Cx170 (m³)</th><th>Consumo Cx170/dia (m³)</th><th></th></tr></thead><tbody>'+
-    L.map(o=>'<tr><td>'+dBR(o.r.d)+'</td><td>'+NUM(o.r.poco)+'</td><td>'+(o.cp!=null?NUM(o.cp):'—')+'</td><td>'+NUM(o.r.cx170)+'</td><td>'+(o.cc!=null?NUM(o.cc):'—')+'</td>'+
+  if(!L.length){ t.innerHTML=vazioMsg(10); }
+  else t.innerHTML='<thead><tr><th>Data</th><th>Poço (m³)</th><th>Cons. Poço</th><th>Cx170 (m³)</th><th>Cons. Cx170</th><th>Reuso (m³)</th><th>Cons. Reuso</th><th>ETE (m³)</th><th>Cons. ETE</th><th></th></tr></thead><tbody>'+
+    L.map(o=>'<tr><td>'+dBR(o.r.d)+'</td><td>'+NUM(o.r.poco)+'</td><td>'+(o.cp!=null?NUM(o.cp):'—')+'</td><td>'+NUM(o.r.cx170)+'</td><td>'+(o.cc!=null?NUM(o.cc):'—')+'</td><td>'+NUM(o.r.reuso)+'</td><td>'+(o.cr!=null?NUM(o.cr):'—')+'</td><td>'+NUM(o.r.ete)+'</td><td>'+(o.ce!=null?NUM(o.ce):'—')+'</td>'+
       '<td><button class="del" onclick="delReg(U.agua_diario,'+o.oi+',renderAguaDia)">✕</button></td></tr>').join('')+'</tbody>';
   // comparativo por mês
   const meses={};
@@ -917,7 +1055,7 @@ function renderProd(){
 function upsertMes(arr,reg){ const i=arr.findIndex(r=>r.ano===reg.ano&&r.mes===reg.mes); if(i>=0) arr[i]=reg; else arr.push(reg); }
 function delReg(arr,i,render){ if(confirm('Remover este registro?')){ arr.splice(i,1); persistir(); render(); } }
 function persistir(){ salvar(); }
-function renderTudo(){ renderAgua();renderAguaDia();renderEnergia();renderGas();renderAnaInt();renderAnaExt();renderAna888();renderEta();renderProd(); }
+function renderTudo(){ renderAgua();renderAguaDia();renderEnergia();renderGas();renderAnaInt();renderAnaExt();renderAna888();renderEta();renderProd();renderRateio('agua');renderRateio('energia');renderRateio('gas'); }
 
 /* =====================================================================
    CARREGAR DADOS ATUAIS (.html do dashboard  ou  .xlsx da base)
@@ -965,7 +1103,7 @@ function importarXlsx(bytes){
   ab=ler('ANALISES 888'); if(ab) U.ana_888=ab.map(r=>({d:xData(g(r,'Data')),rel:String(g(r,'Nº Relat','N Relat','Relat')||''),ponto:String(g(r,'Ponto')||''),cloro:xNum(g(r,'Cloro')),ph:xNum(g(r,'pH')),temp:xNum(g(r,'Temp')),cor:xNum(g(r,'Cor')),fluoreto:xNum(g(r,'Fluoreto')),turbidez:xNum(g(r,'Turbidez')),coli:String(g(r,'Coliformes')||''),ecoli:String(g(r,'E. coli','E.coli','Escherichia')||''),parecer:String(g(r,'Parecer')||'').trim().toUpperCase()})).filter(r=>r.d);
   ab=ler('ETA'); if(ab) U.eta=ab.map(r=>({d:xData(g(r,'Data')),ponto:String(g(r,'Ponto')||''),cloro:xNum(g(r,'Cloro')),ph:xNum(g(r,'pH')),temp:xNum(g(r,'Temp')),fato:String(g(r,'Fato')||''),causa:String(g(r,'Causa')||''),acao:String(g(r,'Ação','Acao')||'')})).filter(r=>r.d);
   ab=ler('PRODUTOS ETE'); if(ab) U.prod=ab.map(r=>({d:xData(g(r,'Data')),p:String(g(r,'Produto')||'').trim(),kg:xNum(g(r,'Consumo')),val:xNum(g(r,'Valor'))})).filter(r=>r.d&&r.p);
-  ab=ler('HIDROMETROS'); if(ab) U.agua_diario=ab.map(r=>({d:xData(g(r,'Data')),poco:xNum(g(r,'Leitura Poço','Leitura Poco')),cx170:xNum(g(r,'Leitura Caixa 170','Leitura Cx','Caixa 170')),resp:String(g(r,'Responsável','Responsavel')||'')})).filter(r=>r.d);
+  ab=ler('HIDROMETROS'); if(ab) U.agua_diario=ab.map(r=>({d:xData(g(r,'Data')),poco:xNum(g(r,'Leitura Poço','Leitura Poco')),cx170:xNum(g(r,'Leitura Caixa 170','Leitura Cx','Caixa 170')),reuso:xNum(g(r,'Leitura Reuso','Reuso')),ete:xNum(g(r,'Leitura Volume ETE','Volume ETE','Leitura ETE')),resp:String(g(r,'Responsável','Responsavel')||'')})).filter(r=>r.d);
   persistir(); renderTudo();
   setStatus('Base .xlsx importada.');
 }
@@ -1005,8 +1143,13 @@ function construirWb(){
     ['Data','Produto','Consumo (kg/L)','Valor (R$)','Responsável'],
     [...U.prod].sort((a,b)=>a.d<b.d?-1:1).map(r=>[dBR(r.d),r.p,r.kg,r.val,r.resp||'']));
   aba(wb,'HIDROMETROS','Base Utilidades Agrivalle — Hidrômetros (leituras diárias)',
-    ['Data','Leitura Poço (m³)','Leitura Caixa 170 (m³)','Responsável'],
-    [...(U.agua_diario||[])].sort((a,b)=>a.d<b.d?-1:1).map(r=>[dBR(r.d),r.poco,r.cx170,r.resp||'']));
+    ['Data','Leitura Poço (m³)','Leitura Caixa 170 (m³)','Leitura Reuso (m³)','Leitura Volume ETE (m³)','Responsável'],
+    [...(U.agua_diario||[])].sort((a,b)=>a.d<b.d?-1:1).map(r=>[dBR(r.d),r.poco,r.cx170,r.reuso,r.ete,r.resp||'']));
+  function _rtSheet(util,arr,tf){ var rows=[]; [...arr].sort(function(a,b){return (a.ano-b.ano)||(a.mes-b.mes);}).forEach(function(r){ var total=tf(r); (CFG.rateio||[]).forEach(function(x){ rows.push([r.ano,MESNOME[r.mes-1],x.cc,x.celula,x[util],Math.round(total*(x[util]||0)/100*100)/100]); }); }); return rows; }
+  var _RH=['Ano','Mês','Centro de Custo','Célula','%','Valor (R$)'];
+  aba(wb,'RATEIO AGUA','Rateio de Água por Centro de Custo',_RH,_rtSheet('agua',U.agua,function(r){return (r.saae_poco||0)+(r.po_val||0);}));
+  aba(wb,'RATEIO ENERGIA','Rateio de Energia por Centro de Custo',_RH,_rtSheet('energia',U.energia,function(r){return (r.livre||0);}));
+  aba(wb,'RATEIO GAS','Rateio de Gás por Centro de Custo',_RH,_rtSheet('gas',U.gas,function(r){return (r.valor||0);}));
   return wb;
 }
 function exportarXlsx(){
@@ -1145,6 +1288,5 @@ atualizarDatalists();
 if($('resp-atual')) $('resp-atual').value=CFG.ultimoResp||'';
 if($('et-ponto')) etaCampos();
 </script>
-<script>if("serviceWorker" in navigator){window.addEventListener("load",function(){navigator.serviceWorker.register("./sw.js").catch(function(){});});}</script>
 </body>
 </html>
